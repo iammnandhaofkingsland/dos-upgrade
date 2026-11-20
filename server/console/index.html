@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DOS · DigiQuench OS</title>
+  <meta name="description" content="DOS by DigiQuench: the AI agent platform that runs business operations under your rules.">
+  <meta name="theme-color" content="#05060a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="/assets/css/dos.css?v=4">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='18' cy='18' r='11' fill='none' stroke='%23FFA21A' stroke-width='5'/%3E%3Ccircle cx='30' cy='30' r='5' fill='%233F86FF'/%3E%3C/svg%3E">
+</head>
+<body>
+  <!-- The boot screen shows while the app checks whether you are already signed in. -->
+  <div class="boot" id="boot"><div class="row" style="flex-direction:column;gap:14px"><span id="bootLogo"></span><span class="muted small">Starting DOS…</span></div></div>
+  <!-- Everything else is drawn by the scripts below: the sign-in screen or the app shell. -->
+  <div id="app"></div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <!-- Load order matters: core first (state, requests, router), then shared pieces, then one file per page. -->
+  <script src="/assets/js/core.js?v=4"></script>
+  <script src="/assets/js/ui.js?v=4"></script>
+  <script src="/assets/js/login.js?v=4"></script>
+  <script src="/assets/js/shell.js?v=4"></script>
+  <script src="/assets/js/home.js?v=4"></script>
+  <script src="/assets/js/studio.js?v=4"></script>
+  <script src="/assets/js/runs.js?v=4"></script>
+  <script src="/assets/js/approvals.js?v=4"></script>
+  <script src="/assets/js/plant.js?v=4"></script>
+  <script src="/assets/js/workorders.js?v=4"></script>
+  <script src="/assets/js/layers.js?v=4"></script>
+  <script src="/assets/js/governance.js?v=4"></script>
+  <script src="/assets/js/ask.js?v=4"></script>
+  <script>DOS.boot();</script>
+</body>
+</html>

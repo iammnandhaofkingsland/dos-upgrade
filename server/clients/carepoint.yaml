@@ -1,0 +1,13 @@
+# A two-doctor clinic. English, evening contact allowed until 20:00, every patient message approved by staff.
+id: carepoint
+name: CarePoint Clinic
+industry: Multi-speciality clinic, Bengaluru
+verticals: [Healthcare]
+accent: "#0E7490"
+contact: frontdesk@carepoint.example
+datasets: {patients: sample, slots: sample, claims: sample, labs: sample, knowledge: sample}
+extra_approvals: [send_message]
+policies:
+  messaging.contact_start: "08:00"
+  messaging.contact_end: "20:00"
+  messaging.allowed_channels: [whatsapp, sms]

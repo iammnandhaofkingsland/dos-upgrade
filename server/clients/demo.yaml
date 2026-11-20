@@ -1,0 +1,17 @@
+# The sandbox client. Every sample dataset is connected and the clock is fixed, so tests behave the same at any hour.
+id: demo
+name: DOS Sandbox
+industry: All industries (sandbox)
+verticals: [Fintech, Manufacturing, Wholesale, Retail, E-commerce, Healthcare, Digital Marketing, Data Automation]
+accent: "#1A73E8"
+contact: sandbox@example.com
+datasets: all
+policies:
+  messaging.test_clock: "11:00"
+# People are shown by role only. Login codes come from dq/access.py (role digit + position) unless a user has "code:".
+users:
+  - {username: owner, name: "Business Owner", role: owner, title: "Business Owner"}
+  - {username: operator, name: "Operations Manager", role: operator, title: "Operations Manager"}
+  - {username: approver, name: "Approver", role: approver, title: "Approver"}
+  - {username: technician, name: "Technician", role: technician, title: "Technician (Mechanical)", technician_id: TEC-11}
+  - {username: auditor, name: "Auditor", role: auditor, title: "Auditor"}

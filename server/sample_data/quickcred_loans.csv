@@ -1,0 +1,9 @@
+loan_id,customer,phone,language,principal,emi,paid_instalments,total_instalments,next_due,overdue_amount,days_past_due
+QC-2001,Pooja Verma,+91-90000-02001,Hindi,40000,3800,9,12,2026-11-05,3800,6
+QC-2002,Arif Khan,+91-90000-02002,Hindi,25000,2400,3,12,2026-10-28,4800,14
+QC-2003,Sunita Devi,+91-90000-02003,Hindi,60000,5600,10,12,2026-11-18,0,0
+QC-2004,Manoj Yadav,+91-90000-02004,Hindi,30000,2900,8,12,2026-11-01,2900,10
+QC-2005,Rekha Gupta,+91-90000-02005,Hindi,50000,4700,5,12,2026-10-15,9400,27
+QC-2006,Deepak Singh,not-a-phone,Hindi,20000,1900,2,12,2026-11-03,1900,8
+QC-2007,Farah Ali,+91-90000-02007,Hindi,35000,abc,4,12,2026-11-09,3300,2
+QC-2001,Duplicate Row,+91-90000-02099,Hindi,40000,3800,9,12,2026-11-05,3800,6

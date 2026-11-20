@@ -1,0 +1,14 @@
+# A small-town lender in Tamil Nadu. Tamil first, standard fair-practice window, waivers up to 10 percent.
+id: sri-balaji
+name: Sri Balaji Finance
+industry: Small business and vehicle loans, Tamil Nadu
+verticals: [Fintech, Data Automation]
+accent: "#0B8043"
+contact: ops@sribalajifinance.example
+datasets: {loans: sample, knowledge: sample, transactions: sample, account_txns: sample, risk: sample, kyc_docs: sample, warehouse: sample, data_catalog: sample, pincodes: sample}
+policies:
+  messaging.language: Tamil
+  messaging.contact_start: "08:00"
+  messaging.contact_end: "19:00"
+  lending.max_waiver_pct: 10
+  lending.min_paid_instalments_for_waiver: 6

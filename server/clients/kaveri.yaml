@@ -1,0 +1,26 @@
+# A fictional automotive-components machining plant in Hosur, Tamil Nadu (the buildathon hero client).
+# Two shifts, eight machines, five maintenance technicians. Every name and number here is invented.
+id: kaveri
+name: Kaveri Precision Components
+industry: Automotive components machining (shafts, flanges, gear blanks), Hosur
+verticals: [Manufacturing, Wholesale, Data Automation]
+accent: "#F59E0B"
+contact: plant@kaveri.example
+datasets: {machines: sample, telemetry: sample, fault_signatures: sample, repair_history: sample, alarm_manual: sample, technicians: sample,
+           spare_parts: sample, production_orders: sample, lots: sample, spc: sample, shift_performance: sample, energy: sample, materials: sample,
+           maintenance_plan: sample, w_purchase_orders: sample, goods_receipts: sample, supplier_invoices: sample, shipments: sample,
+           supplier_scores: sample, stock: sample, suppliers: sample, knowledge: sample, warehouse: sample, data_catalog: sample}
+policies:
+  messaging.enforce_contact_hours: false   # alerts go to the plant's own staff, who work in shifts round the clock
+  messaging.allowed_channels: [whatsapp, sms, email]
+  manufacturing.ack_minutes: 3
+  manufacturing.spare_auto_limit_inr: 25000
+  manufacturing.downtime_cost_per_hour_inr: 150000
+users:
+  - {username: plant.head, name: "Plant Head", role: owner, title: "Plant Head (owner)"}
+  - {username: planner, name: "Production Planner", role: operator, title: "Production Planner (runs the agents)"}
+  - {username: maint.head, name: "Maintenance Head", role: approver, title: "Maintenance Head (approves part orders)", approves: [order_spare_part, reschedule_maintenance, reassign_order]}
+  - {username: quality.head, name: "Quality Head", role: approver, title: "Quality Head (approves lot holds)", approves: [hold_lot]}
+  - {username: tech.mech, name: "Senior Technician (Mechanical)", role: technician, title: "Senior Mechanical Technician", technician_id: TEC-11}
+  - {username: tech.elec, name: "Technician (Electrical)", role: technician, title: "Electrical Technician", technician_id: TEC-12}
+  - {username: auditor, name: "Compliance Auditor", role: auditor, title: "Compliance Auditor (read-only)"}

@@ -1,0 +1,14 @@
+# An online clothing brand. Longer return window, higher instant-refund limit, strict brand words.
+id: marigold
+name: Marigold Clothing
+industry: Online ethnic wear brand
+verticals: [E-commerce, Retail, Digital Marketing, Data Automation]
+accent: "#B45309"
+contact: hello@marigold.example
+datasets: {orders: sample, products: sample, reviews: sample, customers: sample, stock: sample, suppliers: sample, competitor: sample, knowledge: sample,
+           brand_voice: sample, campaigns: sample, segments: sample, leads: sample, warehouse: sample, data_catalog: sample, pincodes: sample}
+policies:
+  commerce.return_window_days: 10
+  commerce.auto_refund_limit_inr: 2000
+  messaging.tone: Friendly and brief
+  marketing.banned_words: [cheap, guaranteed, best in the world, discount, sale]

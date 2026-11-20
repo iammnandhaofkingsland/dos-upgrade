@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOS · DigiQuench OS</title>
+<!-- LAYER 1: EXPERIENCE. One static file, no build step. It draws only what the control-plane API returns,
+     and the API has already applied the client (layer 2), data (layer 3), agent (layer 4) and safety (layer 5) rules. -->
+<style>
+:root{--l1:#1A73E8;--l2:#0E7490;--l3:#B45309;--l4:#8430CE;--l5:#C5221F;--navy:#0B1F3A;--blue:#1A73E8;--blue-l:#E8F0FE;--green:#188038;--green-l:#E6F4EA;--amber:#B06000;--amber-l:#FEF7E0;--red:#C5221F;--red-l:#FCE8E6;--purple:#8430CE;--purple-l:#F3E8FD;--ink:#202124;--muted:#5F6368;--line:#E3E7ED;--bg:#F6F8FB;--card:#fff}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;line-height:1.45}
+a{color:var(--blue);text-decoration:none;cursor:pointer}h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:0 0 10px}h3{font-size:14px;margin:0 0 6px}
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh;background:linear-gradient(to right,var(--navy) 232px,var(--bg) 232px)}
+.side{background:var(--navy);color:#C9D6EA;padding:18px 12px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{color:#fff;font-weight:700;font-size:18px;padding:4px 10px 18px;letter-spacing:.2px}.logo span{color:#6EA8FF}
+.nav a{display:flex;justify-content:space-between;align-items:center;color:#C9D6EA;padding:9px 12px;border-radius:8px;margin-bottom:2px;font-weight:500}
+.nav a:hover{background:#15305A}.nav a.on{background:#1C3D73;color:#fff}.nav .sec{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#7F93B5;padding:14px 12px 6px}
+.badge{background:#F9AB00;color:#000;border-radius:10px;padding:0 7px;font-size:11px;font-weight:700}
+.main{padding:22px 28px 60px;max-width:1280px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:16px}.sub{color:var(--muted)}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.p-green{background:var(--green-l);color:var(--green)}.p-amber{background:var(--amber-l);color:var(--amber)}.p-red{background:var(--red-l);color:var(--red)}.p-blue{background:var(--blue-l);color:var(--blue)}.p-grey{background:#EEF1F5;color:var(--muted)}.p-purple{background:var(--purple-l);color:var(--purple)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.grid{display:grid;gap:14px}.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}.g21{grid-template-columns:5fr 6fr}
+.kpi .v{font-size:26px;font-weight:700;margin-top:4px}.kpi .l{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}.kpi .h{color:var(--muted);font-size:12px;margin-top:2px}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.4px}
+td{padding:9px 10px;border-bottom:1px solid #EEF1F5;vertical-align:top}tr.click:hover{background:#F3F7FE;cursor:pointer}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 13px;font-weight:600;cursor:pointer;font-size:13px;color:var(--ink)}
+.btn:hover{background:#F3F7FE}.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}.btn.pri:hover{background:#1765CC}.btn.ok{background:var(--green);border-color:var(--green);color:#fff}.btn.no{color:var(--red);border-color:#F2B8B5}.btn:disabled{opacity:.5;cursor:default}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;cursor:pointer;font-weight:500}.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.agent{display:flex;flex-direction:column;gap:8px}.agent .t{font-weight:700;font-size:15px}.agent .tag{color:var(--muted);min-height:40px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sp{justify-content:space-between}
+input,textarea,select{width:100%;border:1px solid #CBD2DC;border-radius:8px;padding:8px 10px;font:inherit;background:#fff}textarea{min-height:84px;resize:vertical}label{font-weight:600;font-size:13px;display:block;margin:10px 0 4px}
+.modal{position:fixed;inset:0;background:rgba(11,31,58,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:20}
+.sheet{background:#fff;border-radius:14px;width:760px;max-width:100%;padding:22px 24px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.steps{display:flex;gap:6px;margin:10px 0 16px}.steps div{flex:1;padding:8px 10px;border-radius:8px;background:#EEF1F5;color:var(--muted);font-weight:600;font-size:13px}.steps .on{background:var(--blue-l);color:var(--blue)}.steps .done{background:var(--green-l);color:var(--green)}
+.tl{position:relative;margin-left:8px;border-left:2px solid var(--line);padding-left:18px}.st{position:relative;margin-bottom:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.st:before{content:"";position:absolute;left:-25px;top:13px;width:12px;height:12px;border-radius:50%;background:var(--blue);border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.st.model:before{background:var(--purple)}.st.config:before{background:#0E7490}.st.data:before{background:#B45309}.st.tool:before{background:var(--blue)}.st.skill:before{background:var(--green)}.st.guardrail:before{background:#F9AB00}.st.error:before{background:var(--red)}.st.approval:before{background:#F9AB00}
+.st .hd{display:flex;justify-content:space-between;gap:8px;align-items:center}.st .nm{font-weight:700}.st .meta{color:var(--muted);font-size:12px;white-space:nowrap}
+pre{background:#F6F8FA;border:1px solid #EEF1F5;border-radius:8px;padding:8px 10px;font-size:12px;white-space:pre-wrap;word-break:break-word;margin:6px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:4px 12px}.kv div:nth-child(odd){color:var(--muted)}
+.bars{display:flex;align-items:flex-end;gap:4px;height:230px;padding-top:8px;border-bottom:1px solid var(--line)}.bars div{flex:1;background:var(--blue);border-radius:3px 3px 0 0;min-height:2px;position:relative}.bars div.f{background:var(--red)}
+.note{background:var(--amber-l);border:1px solid #F5D68A;border-radius:8px;padding:8px 12px;color:#5C3D00;margin-bottom:14px}.answer{background:var(--blue-l);border-radius:10px;padding:12px 14px;white-space:pre-wrap}
+.empty{color:var(--muted);text-align:center;padding:28px}.lock{color:var(--amber);font-weight:700}.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+@media(max-width:1000px){.g4{grid-template-columns:1fr 1fr}.g3,.g2,.g21{grid-template-columns:1fr}.app{grid-template-columns:1fr;background:var(--bg)}.side{position:static;height:auto}}
+
+.who{padding:0 6px 12px;border-bottom:1px solid #1C3D73;margin-bottom:6px}.who label{color:#7F93B5;font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin:8px 4px 3px}
+.who select{background:#15305A;color:#fff;border:1px solid #29497C;padding:7px 8px;font-weight:600}
+.nav .sec{display:flex;align-items:center;gap:7px}.ln{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;font-size:11px;font-weight:800;color:#fff;flex:none}
+.l1{background:#1A73E8}.l2{background:#0E7490}.l3{background:#B45309}.l4{background:#8430CE}.l5{background:#C5221F}
+.lt{display:inline-block;border-radius:5px;padding:1px 6px;font-size:11px;font-weight:700;color:#fff;margin-right:6px}
+.layers{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}.layer{border-top:4px solid var(--blue);cursor:pointer}.layer:hover{background:#F8FAFE}
+.layer .n{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700}.layer .hl{font-size:16px;font-weight:700;margin:4px 0}.layer .f{color:var(--muted);font-size:12px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--green)}.dot.warn{background:#F9AB00}.dot.stop{background:var(--red)}
+.stopbar{background:var(--red);color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.accent{height:4px;border-radius:4px;margin:-8px 0 14px}.grid>*{min-width:0}.set{display:grid;grid-template-columns:minmax(0,1.2fr) 190px minmax(0,1.3fr);gap:6px 14px;align-items:center;padding:8px 0;border-bottom:1px solid #EEF1F5}
+.set .lb{font-weight:600}.set .hp{color:var(--muted);font-size:12px}.set input,.set select{padding:6px 8px}.set .chg input,.set .chg select{border-color:var(--blue);background:var(--blue-l)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:12px}.tabs a{padding:8px 12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent}.tabs a.on{color:var(--blue);border-color:var(--blue)}
+.diff{font-family:ui-monospace,Menlo,monospace;font-size:12px}.diff .o{color:var(--red);text-decoration:line-through}.diff .nw{color:var(--green);font-weight:700}
+.chk{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #EEF1F5}.chk .ic{width:20px;height:20px;border-radius:50%;flex:none;color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;background:var(--green)}.chk .ic.x{background:var(--red)}
+.st.sub2{margin-left:22px;padding:6px 10px;background:#FBFCFE}.p-teal{background:#E0F2F5;color:#0E7490}.p-brown{background:#FDF0E0;color:#B45309}
+@media(max-width:1000px){.layers{grid-template-columns:1fr 1fr}.set{grid-template-columns:1fr}}
+
+.logo{display:flex;align-items:center;gap:10px}.logo b{font-size:22px;letter-spacing:1px;display:block;line-height:1}.logo small{display:block;color:#8FA3C8;font-size:11px;font-weight:500;letter-spacing:.6px;margin-top:3px}
+.user{display:flex;gap:10px;align-items:center;padding:10px 6px 4px}.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#19E3CF,#4566FF);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}
+.user .nm{color:#fff;font-weight:700;line-height:1.2}.user .tt{color:#8FA3C8;font-size:11.5px;line-height:1.3}.who .co{color:#fff;font-weight:600;font-size:12.5px;padding:2px 6px 8px}
+.who button{margin:8px 6px 0;width:calc(100% - 12px);background:#15305A;color:#fff;border:1px solid #29497C}
+#login{position:fixed;inset:0;background:radial-gradient(circle at 15% 20%,#14306a 0,#070D22 55%);display:flex;align-items:stretch;z-index:50;overflow:auto}
+.lg-left{flex:1.05;padding:56px 56px 40px;color:#C9D6EA;display:flex;flex-direction:column;gap:18px}.lg-left h1{color:#fff;font-size:34px;line-height:1.15;margin:8px 0 0}
+.lg-left .brand{display:flex;align-items:center;gap:14px}.lg-left .brand b{font-size:36px;color:#fff;letter-spacing:2px}.lg-left .brand small{display:block;color:#8FA3C8;letter-spacing:1px}
+.lg-layers{display:grid;gap:8px;margin-top:6px}.lg-layers div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px 12px;display:flex;gap:10px;align-items:center}
+.lg-right{flex:1;background:#fff;padding:44px 44px 30px;overflow:auto}.lg-right h2{margin:0 0 4px;font-size:22px}
+.qa{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.qa .card{cursor:pointer;padding:12px;border:1px solid var(--line)}.qa .card:hover{border-color:var(--blue);background:var(--blue-l)}
+.qa .r{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}.qa .n{font-weight:700;margin:2px 0}.qa .d{font-size:12px;color:var(--muted)}
+.mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.sig svg{width:100%;height:30px}.mc{border-top:4px solid var(--green)}.mc.warning{border-top-color:#F9AB00}.mc.alarm{border-top-color:var(--red);box-shadow:0 0 0 2px #F2B8B5}.mc.maintenance{border-top-color:var(--blue)}
+.mc .t{font-weight:700}.mc .s{font-size:11.5px;color:var(--muted)}.sig{display:grid;grid-template-columns:72px minmax(0,1fr) 66px;align-items:center;gap:6px;font-size:12px;margin-top:4px}.sig .v{text-align:right;font-weight:700}.sig .v.al{color:var(--red)}.sig .v.wn{color:#B06000}
+.tl2{border-left:2px solid var(--line);margin-left:6px;padding-left:12px}.tl2 div{margin:0 0 8px;font-size:12.5px}.tl2 b{color:var(--ink)}.tl2 .tm{color:var(--muted);font-size:11px;margin-right:6px}
+.chipl{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--blue-l);color:var(--blue);font-size:11.5px;font-weight:600;margin:2px 4px 2px 0}
+.simbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#FFF8E6;border:1px dashed #F0C36D;border-radius:10px;padding:8px 12px;margin-bottom:12px}.simbar select{width:auto}
+@media(max-width:1100px){.mgrid{grid-template-columns:1fr 1fr}#login{flex-direction:column}.qa{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="logo"><svg viewBox="0 0 512 512" width="30" height="30" aria-hidden="true"><defs><linearGradient id="lgt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4566FF"/><stop offset="1" stop-color="#7B5CFF"/></linearGradient></defs><g transform="translate(256 256) scale(0.96) translate(-254 -254)"><path d="M224.5 367.8 A132 132 0 0 1 151.9 334.5" fill="none" stroke="#19E3CF" stroke-width="46"/><path d="M140.3 321.7 A132 132 0 0 1 107.4 258.3" fill="none" stroke="#19BDE8" stroke-width="46"/><path d="M105.1 241.9 A132 132 0 0 1 132.9 163.4" fill="none" stroke="#2C8EF6" stroke-width="46"/><path d="M143.4 150.6 A132 132 0 0 1 210.9 108.4" fill="none" stroke="#4566FF" stroke-width="46"/><path d="M227.3 104.2 A132 132 0 0 1 307.4 125.6" fill="none" stroke="#7B5CFF" stroke-width="46"/><line x1="331" y1="331" x2="378" y2="378" stroke="url(#lgt)" stroke-width="46" stroke-linecap="round"/><circle cx="393" cy="393" r="30" fill="#fff"/><circle cx="236" cy="236" r="22" fill="#fff"/></g></svg><div><b>DOS</b><small>DigiQuench OS</small></div></div>
+    <div class="who" id="who"></div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <main class="main" id="view"></main>
+</div>
+<div id="modal"></div>
+<div id="login" style="display:none"></div>
+<script>
+// ---------- tiny framework ----------
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); // model, tool and data output is untrusted: always escape
+const LS = (k, d) => localStorage.getItem(k) || d;
+const TOKEN = () => localStorage.getItem("dos_token") || "";
+async function api(path, opts = {}) {
+  const headers = {"Content-Type": "application/json", ...(opts.headers || {})};
+  if (TOKEN()) headers.Authorization = "Bearer " + TOKEN();
+  const res = await fetch("/api" + path, {...opts, headers, body: opts.body ? JSON.stringify(opts.body) : undefined});
+  if (res.status === 401 && !path.startsWith("/auth")) { signOut(); throw new Error("Please sign in"); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || res.statusText);
+  return data;
+}
+const fmtT = (ts) => ts ? new Date(ts * 1000).toLocaleString("en-IN", {day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit"}) : "";
+const rs = (v) => v == null ? "-" : "₹" + Number(v).toLocaleString("en-IN", {maximumFractionDigits: 2});
+const ms = (v) => v == null ? "-" : (v >= 1000 ? (v / 1000).toFixed(1) + " s" : v + " ms");
+const pct = (v) => v == null ? "-" : Math.round(v * 100) + "%";
+const STATUS = {completed: "p-green", live: "p-green", active: "p-green", approved: "p-green", ok: "p-green", done: "p-green", sample: "p-green", upload: "p-green", closed: "p-green", read: "p-grey", running: "p-blue", evaluating: "p-blue", configured: "p-blue", waiting_approval: "p-amber", pending: "p-amber", paused: "p-amber", scheduled: "p-amber", open: "p-amber", failed: "p-red", rejected: "p-red", error: "p-red", blocked: "p-red", denied: "p-red", stopped: "p-red", cancelled: "p-grey", none: "p-red", available: "p-grey", superseded: "p-grey", rolled_back: "p-grey", applied: "p-amber", awaiting_approval: "p-amber", High: "p-red", Medium: "p-amber", Low: "p-green", Restricted: "p-red", Confidential: "p-amber", Internal: "p-blue", Public: "p-grey"};
+const WORDS = {none: "not connected", sample: "sample data", upload: "your file"};
+const pill = (s, text) => `<span class="pill ${STATUS[s] || "p-grey"}">${esc(text || WORDS[s] || String(s).replace(/_/g, " "))}</span>`;
+const AUT = {suggest: ["Suggests only", "p-grey"], approve: ["Acts with approval", "p-amber"], auto: ["Acts within limits", "p-green"]};
+const LNAME = {1: "Experience", 2: "Client rules", 3: "Data", 4: "Agent", 5: "Safety"};
+const ltag = (n) => `<span class="lt l${n}" title="Layer ${n}: ${LNAME[n]}">L${n}</span>`;
+let META = {}, timer = null;
+const can = (p) => (META.permissions || []).includes(p);
+const dis = (p) => can(p) ? "" : `disabled title="Your role (${esc(META.role)}) cannot do this"`;
+const NAV = [["overview", "Overview", 0],
+  ["#plant", "Live plant"], ["plant", "Plant floor"], ["workorders", "Work orders"],
+  [2, "Client rules"], ["config", "Client configuration"],
+  [3, "Data"], ["data", "Data sources"], ["dataaccess", "Data access log"],
+  [4, "AI agents"], ["catalog", "Agent Catalog"], ["agents", "My Agents"], ["runs", "Runs & Traces"], ["actions", "Actions taken"], ["builder", "Agent Builder"],
+  [5, "Safety & governance"], ["approvals", "Approvals"], ["governance", "Governance"], ["selftest", "Safety self-test"], ["incidents", "Incidents"], ["audit", "Audit & evidence"]];
+const TECH_NAV = [["#plant", "Live plant"], ["workorders", "My work orders"], ["plant", "Plant floor"]];
+const LANDING = {owner: "overview", operator: "plant", approver: "approvals", technician: "workorders", auditor: "governance"};
+const ROLE_SEES = {owner: "Everything: the five-layer overview, client rules, data, agents, approvals and governance.",
+  operator: "Plant floor, agents, runs and traces. Can simulate a machine fault for the demo.",
+  approver: "Approvals inbox (spare-part orders, lot holds), plant floor, emergency stop.",
+  technician: "Own work orders: acknowledge, repair, confirm the cause. Plant floor.",
+  auditor: "Read-only: every trace, the audit chain, the evidence pack, the safety self-test."};
+function navItems() {
+  if (META.role === "technician") return TECH_NAV;
+  let items = NAV;
+  if (!META.plant) { const a = items.findIndex((x) => x[0] === "#plant"); items = items.slice(0, a).concat(items.slice(a + 3)); }
+  return items;
+}
+async function drawNav(active) {
+  let pending = 0, open = 0, mine = 0;
+  try { if (META.role !== "technician") { pending = (await api("/approvals")).length; open = (await api("/governance/incidents?status=open")).length; } if (META.plant) mine = (await api("/workorders?mine=true")).filter((w) => w.status !== "resolved").length; } catch (e) {}
+  const badge = (id) => id === "approvals" && pending ? `<span class="badge">${pending}</span>` : id === "incidents" && open ? `<span class="badge">${open}</span>` : id === "workorders" && mine ? `<span class="badge">${mine}</span>` : "";
+  $("#nav").innerHTML = navItems().map(([id, label]) => typeof id === "number" ? `<div class="sec"><span class="ln l${id}">${id}</span>${label}</div>`
+    : id.startsWith("#") ? `<div class="sec"><span class="ln" style="background:#F59E0B">⚙</span>${label}</div>` : `<a href="#/${id}" class="${active === id ? "on" : ""}">${label}${badge(id)}</a>`).join("");
+}
+let DEMO = null;
+async function drawWho() {
+  const u = META.user || {name: META.actor, role: META.role};
+  const initials = (u.name || "?").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  try { DEMO = await (await fetch("/api/auth/demo-users?client=" + encodeURIComponent(META.client.id))).json(); } catch (e) { DEMO = null; }
+  const sw = DEMO && DEMO.enabled && DEMO.users.length ? `<label>Reviewer: switch role</label><select onchange="if(this.value)doLogin('${esc(META.client.id)}',this.value,DEMO.password)"><option value="">${esc(u.name)} (${esc(META.role)})</option>${DEMO.users.filter((x) => x.username !== (u.username || "")).map((x) => `<option value="${esc(x.username)}">${esc(x.name)}: ${esc(x.title)}</option>`).join("")}</select>` : "";
+  $("#who").innerHTML = `<div class="user"><div class="avatar">${esc(initials)}</div><div><div class="nm">${esc(u.name)}</div><div class="tt">${esc(u.title || META.role)}</div></div></div>
+    <div class="co">${esc(META.client.name)}</div>${sw}<button class="btn" onclick="signOut()">Sign out</button>`;
+}
+function signOut() { localStorage.removeItem("dos_token"); META = {}; clearTimeout(timer); showLogin(localStorage.getItem("dos_client")); }
+async function doLogin(client, username, password) {
+  try {
+    const res = await fetch("/api/auth/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({client, username, password})});
+    const data = await res.json(); if (!res.ok) throw new Error(data.detail || "Sign-in failed");
+    localStorage.setItem("dos_token", data.token); localStorage.setItem("dos_client", client);
+    META = {}; WZ = {}; modal(""); $("#login").style.display = "none"; $(".app").style.display = "";
+    const me = await api("/meta"); location.hash = "#/" + (me.plant || !["operator"].includes(me.role) ? LANDING[me.role] : "agents"); route();
+  } catch (e) { const el = $("#lgerr"); if (el) el.textContent = e.message; else toast(e.message); }
+}
+async function showLogin(pref) {
+  $(".app").style.display = "none"; const box = $("#login"); box.style.display = "flex";
+  const clients = await (await fetch("/api/clients")).json();
+  const cid = clients.some((c) => c.id === pref) ? pref : (clients.find((c) => c.id === "kaveri") || clients[0]).id;
+  const demo = await (await fetch("/api/auth/demo-users?client=" + cid)).json();
+  const layers = [["l1", "1", "Experience: one console for every role"], ["l2", "2", "Client configuration: your rules, not code"], ["l3", "3", "Data: one gate, classified and logged"], ["l4", "4", "AI agents: 55 ready agents on Gemini"], ["l5", "5", "Safety, security and governance"]];
+  box.innerHTML = `<div class="lg-left"><div class="brand">${`<svg viewBox="0 0 512 512" width="30" height="30" aria-hidden="true"><defs><linearGradient id="lgt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4566FF"/><stop offset="1" stop-color="#7B5CFF"/></linearGradient></defs><g transform="translate(256 256) scale(0.96) translate(-254 -254)"><path d="M224.5 367.8 A132 132 0 0 1 151.9 334.5" fill="none" stroke="#19E3CF" stroke-width="46"/><path d="M140.3 321.7 A132 132 0 0 1 107.4 258.3" fill="none" stroke="#19BDE8" stroke-width="46"/><path d="M105.1 241.9 A132 132 0 0 1 132.9 163.4" fill="none" stroke="#2C8EF6" stroke-width="46"/><path d="M143.4 150.6 A132 132 0 0 1 210.9 108.4" fill="none" stroke="#4566FF" stroke-width="46"/><path d="M227.3 104.2 A132 132 0 0 1 307.4 125.6" fill="none" stroke="#7B5CFF" stroke-width="46"/><line x1="331" y1="331" x2="378" y2="378" stroke="url(#lgt)" stroke-width="46" stroke-linecap="round"/><circle cx="393" cy="393" r="30" fill="#fff"/><circle cx="236" cy="236" r="22" fill="#fff"/></g></svg>`.replace('width="30" height="30"', 'width="58" height="58"')}<div><b>DOS</b><small>DIGIQUENCH OS</small></div></div>
+    <h1>The AI agent platform<br>that runs your operations.</h1><div>One framework of five layers. Every agent, for every company, acts only through all five.</div>
+    <div class="lg-layers">${layers.map(([c, n, t]) => `<div><span class="ln ${c}">${n}</span>${t}</div>`).join("")}</div>
+    <div style="margin-top:auto;font-size:12px;color:#8FA3C8">Built on Gemini, Google ADK and Google Cloud. Demo companies and people are fictional.</div></div>
+  <div class="lg-right"><h2>Sign in</h2><div class="sub">Each company has its own users. Your role decides what you can see and do.</div>
+    <label>Company</label><select id="lgc" onchange="showLogin(this.value)">${clients.map((c) => `<option value="${esc(c.id)}" ${c.id === cid ? "selected" : ""}>${esc(c.name)}: ${esc(c.industry)}</option>`).join("")}</select>
+    <label>Username</label><input id="lgu" autocomplete="username"><label>Password</label><input id="lgp" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin('${esc(cid)}',$('#lgu').value,$('#lgp').value)">
+    <div class="row sp" style="margin-top:12px"><span id="lgerr" style="color:var(--red)"></span><button class="btn pri" onclick="doLogin('${esc(cid)}',$('#lgu').value,$('#lgp').value)">Sign in</button></div>
+    ${demo.enabled ? `<h3 style="margin-top:22px">Reviewer quick access</h3><div class="sub">One click signs you in as that person (demo password <span class="mono">${esc(demo.password)}</span>). Try each role: the menus and powers change.</div>
+    <div class="qa">${demo.users.map((u) => `<div class="card" onclick="doLogin('${esc(cid)}','${esc(u.username)}','${esc(demo.password)}')"><div class="r" style="color:${{owner: "#1A73E8", operator: "#8430CE", approver: "#C5221F", technician: "#B45309", auditor: "#0E7490"}[u.role]}">${esc(u.role)}</div><div class="n">${esc(u.name)}</div><div class="d">${esc(u.title)}</div><div class="d" style="margin-top:4px">${esc(ROLE_SEES[u.role])}</div><div class="mono" style="font-size:11px;margin-top:4px">${esc(u.username)}</div></div>`).join("")}</div>` : ""}
+  </div>`;
+}
+const modeBadge = () => META.mode === "mock" ? `<span class="pill p-amber">Simulation mode: scripted model, no Gemini calls</span>` : `<span class="pill p-green">Live: Gemini API</span>`;
+const head = (title, sub, right = "", layer = 0) => `${META.kill && META.kill.engaged ? `<div class="stopbar"><span>EMERGENCY STOP ENGAGED by ${esc(META.kill.by)}: ${esc(META.kill.reason)}. No agent can run for this client.</span><a href="#/governance" style="color:#fff;text-decoration:underline">Open Governance</a></div>` : ""}
+  <div class="accent" style="background:${esc(META.client.accent)}"></div><div class="top"><div><h1>${layer ? ltag(layer) : ""}${title}</h1><div class="sub">${sub}</div></div><div class="row">${right}<span class="pill p-grey">${esc(META.client.name)} · rules v${META.client.version}</span>${modeBadge()}</div></div>`;
+function modal(html, wide) { $("#modal").innerHTML = html ? `<div class="modal" onclick="if(event.target===this)modal('')"><div class="sheet" style="${wide ? "width:960px" : ""}">${html}</div></div>` : ""; }
+function toast(msg) { alert(msg); }
+const kv = (pairs) => `<div class="kv">${pairs.map(([k, v]) => `<div>${k}</div><div>${v}</div>`).join("")}</div>`;
+const check = (c) => `<div class="chk"><div class="ic ${c.passed ? "" : "x"}">${c.passed ? "✓" : "✕"}</div><div><b>${esc(c.name)}</b><div class="sub">${esc(c.detail || c.observed || "")}</div></div></div>`;
+const fmtV = (v) => Array.isArray(v) ? v.join(", ") : v === true ? "Yes" : v === false ? "No" : v === "" ? "(empty)" : v;
+
+// ---------- pages ----------
+const pages = {
+  async overview() {
+    const [m, runs, layers] = await Promise.all([api("/metrics/overview"), api("/runs?limit=8"), api("/layers")]);
+    const max = Math.max(1, ...m.timeline.map((b) => b.runs)); const link = {1: "overview", 2: "config", 3: "data", 4: "agents", 5: "governance"};
+    return head("Overview", `${esc(META.client.industry)} · last ${m.window_hours} hours`) + `
+    <div class="layers">${layers.map((l) => `<div class="card layer" style="border-top-color:var(--l${l.layer},#888)" onclick="location.hash='#/${link[l.layer]}'"><div class="n"><span class="ln l${l.layer}">${l.layer}</span> ${esc(l.name)}</div>
+      <div class="hl"><span class="dot ${l.status === "ok" ? "" : l.status}"></span>${esc(l.headline)}</div>${l.facts.map((f) => `<div class="f">${esc(f)}</div>`).join("")}</div>`).join("")}</div>
+    ${m.simulated_runs ? `<div class="note"><b>Rehearsal data.</b> ${m.simulated_runs} of ${m.runs} runs below used the scripted offline model. Costs are estimates at Gemini 3.8 Flash prices.</div>` : ""}
+    <div class="grid g4">
+      ${kpi("Agents live", `${m.agents_live} / ${m.agents_available}`, "In this client's industries")}
+      ${kpi("Runs", m.runs, `${m.completed} completed, ${m.failed} failed`)}
+      ${kpi("Success rate", pct(m.success_rate), "Completed out of finished runs")}
+      ${kpi("Waiting for approval", m.approvals.pending, `${m.approvals.approved} approved, ${m.approvals.rejected} rejected`)}
+      ${kpi("Median time", ms(m.p50_latency_ms), `95th percentile ${ms(m.p95_latency_ms)}`)}
+      ${kpi("Model cost, 30 days", rs(m.month_cost_inr), `Cap ${rs(m.month_cap_inr)} (client rule)`)}
+      ${kpi("Rule and data reads", m.config_reads + m.data_reads, `${m.config_reads} client rules, ${m.data_reads} data sources`)}
+      ${kpi("Safety events", m.guardrail_events, `${m.blocked_actions} actions blocked or rejected`)}
+    </div>
+    <div class="grid g21" style="margin-top:14px">
+      <div class="card"><h2>Runs per hour</h2><div class="bars">${m.timeline.length ? m.timeline.map((b) => `<div title="${b.runs} runs, ${b.failed} failed" style="height:${Math.round(b.runs / max * 100)}%" class="${b.failed ? "f" : ""}"></div>`).join("") : `<div class="empty" style="flex:1;background:none">No runs yet. Activate an agent from the catalog.</div>`}</div><div class="row sp sub" style="margin-top:6px"><span>${m.window_hours} hours ago</span><span>Red bar = an hour with a failed run</span><span>now</span></div></div>
+      <div class="card"><h2>By agent</h2><table><tr><th>Agent</th><th>Runs</th><th>Success</th><th>Avg time</th><th>Cost</th></tr>
+        ${m.by_agent.map((a) => `<tr class="click" onclick="location.hash='#/agent/${a.agent_id}'"><td><b>${esc(a.name)}</b></td><td>${a.runs}</td><td>${pct(a.completed / Math.max(1, a.completed + a.failed))}</td><td>${ms(a.avg_latency_ms)}</td><td>${rs(a.cost_inr)}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">No activity yet</td></tr>`}</table></div>
+    </div>
+    <div class="card" style="margin-top:14px"><h2>Recent runs</h2>${runTable(runs)}</div>`;
+  },
+
+  // ===== layer 2 =====
+  async config() {
+    const [c, vers] = await Promise.all([api("/client"), api("/client/versions")]);
+    CFG = c; const groups = [...new Set(c.schema.map((p) => p.group))];
+    const field = (p) => { const v = c.effective[p.key], id = "cf_" + p.key.replace(/\./g, "_"), ro = p.locked || !can("config.edit") ? "disabled" : "";
+      if (p.type === "bool") return `<select id="${id}" ${ro}><option value="true" ${v ? "selected" : ""}>Yes</option><option value="false" ${v ? "" : "selected"}>No</option></select>`;
+      if (p.type === "choice") return `<select id="${id}" ${ro}>${p.choices.map((o) => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+      if (p.type === "list") return `<input id="${id}" value="${esc(v.join(", "))}" ${ro}>`;
+      return `<input id="${id}" value="${esc(v)}" ${p.type === "int" || p.type === "float" ? `type="number" step="any" min="${p.min}" max="${p.max}"` : ""} ${ro}>`; };
+    return head("Client configuration", "One platform, different rules for every client. Change a rule here and every agent follows it on its next step. No code, no redeploy.",
+      `<button class="btn pri" onclick="saveConfig()" ${dis("config.edit")}>Save as new version</button>`, 2) + `
+    <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)"><div>
+      ${groups.map((g) => `<div class="card" style="margin-bottom:14px"><h2>${esc(g)}</h2>${c.schema.filter((p) => p.group === g).map((p) => `<div class="set ${JSON.stringify(c.effective[p.key]) !== JSON.stringify(p.default) ? "chg" : ""}">
+        <div><div class="lb">${p.locked ? "🔒 " : ""}${esc(p.label)}</div><div class="hp">${esc(p.help)}</div></div>
+        <div>${field(p)}</div>
+        <div class="hp">${p.locked ? `<b class="lock">Platform rule, locked</b>` : `Platform default: <b>${esc(fmtV(p.default))}${p.unit ? " " + esc(p.unit) : ""}</b>${p.min != null ? ` · allowed ${p.min} to ${p.max}` : ""}`}<br>Enforced in <span class="mono">${esc(p.enforced)}</span></div></div>`).join("")}</div>`).join("")}
+      <div class="card"><h2>Actions that always need a human for this client</h2><div class="sub" style="margin-bottom:8px">Added on top of each agent's own approval rules. A client can only make agents stricter, never looser.</div>
+        <div class="row">${c.tools.map((t) => `<label style="margin:0;font-weight:500"><input type="checkbox" class="cf_ap" style="width:auto" value="${esc(t)}" ${c.client.extra_approvals.includes(t) ? "checked" : ""} ${can("config.edit") ? "" : "disabled"}> <span class="mono">${esc(t)}</span></label>`).join(" &nbsp; ")}</div></div>
+    </div><div>
+      <div class="card" style="margin-bottom:14px"><h2>From requirements to rules</h2><div class="sub">Paste what the client asked for in their own words. The platform proposes settings; you review them. Nothing is applied until you save.</div>
+        <textarea id="req" style="margin-top:8px;min-height:96px" placeholder="Example: We speak Hindi. Never offer a waiver above 4 percent. Contact customers only from 9 am to 6 pm. Refunds above Rs 1000 need a supervisor.">We speak Hindi. Never offer a waiver above 4 percent. Contact customers only from 9 am to 6 pm. We also want voice calls.</textarea>
+        <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" onclick="draftConfig()" ${dis("config.edit")}>Propose settings</button></div><div id="reqout"></div></div>
+      <div class="card"><h2>Version history</h2><div class="sub" style="margin-bottom:8px">Every run records the version it ran under.</div>
+        ${vers.map((v) => `<div style="padding:8px 0;border-bottom:1px solid #EEF1F5"><div class="row sp"><b>Version ${v.version}</b><span class="sub">${fmtT(v.created_at)} · ${esc(v.actor)}</span></div>
+          ${v.note ? `<div class="sub">${esc(v.note)}</div>` : ""}<div class="diff">${v.diff.map((d) => `${esc(d.label)}: <span class="o">${esc(fmtV(d.old))}</span> → <span class="nw">${esc(typeof d.new === "object" && !Array.isArray(d.new) ? "updated" : fmtV(d.new))}</span>`).join("<br>") || "Initial configuration"}</div>
+          ${v.version !== c.client.version ? `<a onclick="rollbackConfig(${v.version})">Restore this version</a>` : `<span class="pill p-green">Current</span>`}</div>`).join("")}</div>
+    </div></div>`;
+  },
+
+  // ===== layer 3 =====
+  async data() {
+    const inv = await api("/data");
+    return head("Data sources", "The only door between agents and data. An agent can read a source only if it is connected for this client, and every read is logged.", "", 3) + `
+    <div class="card"><table><tr><th>Data source</th><th>Sensitivity</th><th>Status</th><th>Rows</th><th>Personal fields</th><th>Used by agents</th><th>Reads</th><th></th></tr>
+      ${inv.map((d) => `<tr><td><b>${esc(d.title)}</b><div class="sub">${esc(d.description)}</div></td><td>${pill(d.classification)}</td><td>${pill(d.status)}</td><td>${d.rows || "-"}</td>
+        <td>${d.personal_fields.map((f) => `<span class="pill p-grey">${esc(f)}</span>`).join(" ") || "-"}</td><td>${d.agents.map(esc).join(", ") || "-"}</td>
+        <td>${d.reads}${d.denied ? ` <span class="pill p-red">${d.denied} refused</span>` : ""}</td><td><button class="btn" onclick="showData('${d.name}')">Open</button></td></tr>`).join("")}</table></div>
+    <div class="note" style="margin-top:14px">Lineage on this page is read from the tool source code (every <span class="mono">ds("name")</span> call), so it cannot go out of date.</div>`;
+  },
+  async dataaccess() {
+    const rows = await api("/data/access?limit=200");
+    return head("Data access log", "Which agent read which data source, through which tool, in which run. Refused reads are logged too.", "", 3) + `<div class="card"><table><tr><th>When</th><th>Agent</th><th>Tool</th><th>Data source</th><th>Sensitivity</th><th>Result</th><th>Run</th></tr>
+      ${rows.map((a) => `<tr class="click" onclick="location.hash='#/run/${a.run_id}'"><td style="white-space:nowrap">${fmtT(a.created_at)}</td><td>${esc(a.agent_name || a.agent_id)}${a.purpose && a.purpose !== "run" ? ` <span class="sub">(${esc(a.purpose)})</span>` : ""}</td><td class="mono">${esc(a.tool)}</td><td>${esc(a.title)}${a.personal_data ? ` <span class="pill p-grey">personal</span>` : ""}</td><td>${pill(a.classification)}</td><td>${pill(a.status)}</td><td class="mono">${esc(a.run_id)}</td></tr>`).join("") || `<tr><td colspan="7" class="empty">No reads yet</td></tr>`}</table></div>`;
+  },
+
+  // ===== layer 4 =====
+  async catalog(arg) {
+    const all = await api("/catalog"); const v = arg ? decodeURIComponent(arg) : "All";
+    const list = v === "All" ? all : all.filter((a) => a.vertical === v);
+    return head("Agent Catalog", `${all.length} pre-built agents for this client's industries. Pick one, brief it, pass the gates, deploy it.`, "", 4) + `
+    <div class="chips">${["All", ...META.verticals].map((x) => `<a class="chip ${x === v ? "on" : ""}" href="#/catalog/${encodeURIComponent(x)}">${x} ${x === "All" ? all.length : all.filter((a) => a.vertical === x).length}</a>`).join("")}</div>
+    <div class="grid g3">${list.map((a) => `<div class="card agent">
+      <div class="row sp"><span class="pill p-blue">${esc(a.vertical)}</span>${pill(a.state)}</div>
+      <div class="t">${esc(a.name)} ${a.tier === "hero" ? `<span class="pill p-purple">Demo-ready</span>` : ""}</div>
+      <div class="tag">${esc(a.tagline)}</div>
+      <div class="row"><span class="pill ${AUT[a.autonomy][1]}">${AUT[a.autonomy][0]}</span>${pill(a.risk, a.risk + " risk")}${a.data_ready ? `<span class="pill p-green">Data ready</span>` : `<span class="pill p-red" title="${esc(a.missing_data.join(", "))}">Needs data</span>`}</div>
+      <div class="row sp" style="margin-top:4px"><a onclick="showSpec('${a.id}')">View details</a>
+        ${a.state === "available" ? `<button class="btn pri" onclick="wizard('${a.id}')" ${dis("agent.configure")}>Activate</button>` : `<button class="btn" onclick="location.hash='#/agent/${a.id}'">Open</button>`}</div>
+    </div>`).join("")}</div>`;
+  },
+  async agents() {
+    const list = await api("/agents");
+    return head("My Agents", "Agents you have activated. Deploy new versions, pause, or roll back.", `<button class="btn pri" onclick="location.hash='#/catalog'">Add an agent</button>`, 4) + `
+    <div class="card">${list.length ? `<table><tr><th>Agent</th><th>Status</th><th>Risk</th><th>Live version</th><th>Eval score</th><th>Runs</th><th>Success</th><th>Cost</th><th>Approvals</th><th></th></tr>
+      ${list.map((a) => `<tr><td><a href="#/agent/${a.id}"><b>${esc(a.name)}</b></a><div class="sub">${esc(a.vertical)}</div></td><td>${pill(a.status)}</td><td>${pill(a.risk)}</td>
+        <td>${a.live_version ? "v" + a.live_version : `<span class="sub">not deployed</span>`}</td><td>${pct(a.eval_score)}</td><td>${a.runs}</td><td>${pct(a.success_rate)}</td><td>${rs(a.cost_inr)}</td>
+        <td>${a.pending_approvals ? `<a href="#/approvals"><span class="pill p-amber">${a.pending_approvals} waiting</span></a>` : "-"}</td>
+        <td class="row"><button class="btn" onclick="act('${a.id}','${a.status === "paused" ? "resume" : "pause"}')" ${dis("agent.configure")}>${a.status === "paused" ? "Resume" : "Pause"}</button><button class="btn" onclick="wizard('${a.id}')" ${dis("agent.configure")}>Configure</button></td></tr>`).join("")}</table>`
+      : `<div class="empty">No agents yet. <a href="#/catalog">Open the catalog</a> and activate your first agent.</div>`}</div>`;
+  },
+  async agent(id, tab = "try") {
+    const [spec, deps, runs, mine, bp] = await Promise.all([api("/catalog/" + id), api(`/agents/${id}/deployments`), api(`/runs?agent_id=${id}&limit=10`), api("/agents"), api(`/agents/${id}/blueprint`)]);
+    const me = mine.find((a) => a.id === id); const live = deps.find((d) => d.status === "live");
+    const tabs = [["try", "Try it"], ["blueprint", "Blueprint: how it is built"], ["versions", "Versions and gates"]];
+    let body = "";
+    if (tab === "try") body = `<div class="grid g21">
+      <div class="card"><h2>Try it</h2>
+        <textarea id="ask">${esc(spec.demo.ask)}</textarea>
+        <div class="row sp" style="margin-top:10px"><span class="sub">Model: <span class="mono">${esc(spec.model_id)}</span>, thinking ${esc(spec.thinking)}</span>
+        <button class="btn pri" id="runbtn" onclick="runAgent('${id}', ${live ? "false" : "true"})" ${dis("agent.run")}>${live ? "Run agent" : "Test run (not deployed)"}</button></div>
+        <div id="result" style="margin-top:14px"></div>
+        ${bp.readiness.ready ? "" : `<div class="note" style="margin-top:12px"><b>Needs data.</b> Not connected for this client: ${esc(bp.readiness.missing_titles.join(", "))}. <a href="#/data">Open Data sources</a></div>`}
+        <h2 style="margin-top:18px">Recent runs</h2>${runTable(runs)}</div>
+      <div><div class="card"><div class="row sp"><h2>Live trace</h2><span class="sub" id="tracemeta"></span></div><div id="trace"><div class="empty">Run the agent to watch every step, tagged with the layer that produced it.</div></div></div></div></div>`;
+    if (tab === "blueprint") body = `<div class="grid" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)">
+      <div><div class="card" style="margin-bottom:14px"><h2>${ltag(4)}Tools: the agent's whole reach</h2><table><tr><th>Tool</th><th>Human approval</th><th>Reads data</th><th>Client rules it obeys</th></tr>
+        ${bp.tools.map((t) => `<tr><td class="mono">${esc(t.tool)}${t.acts ? ` <span class="pill p-purple" title="Changes something outside the agent">acts</span>` : ""}</td><td>${t.mode === "never" ? `<span class="sub">No</span>` : `<span class="pill p-amber">${t.mode === "above" ? "Above limit" : "Always"}</span><div class="sub">${esc(t.why)}</div>`}</td>
+          <td>${t.datasets.map((d) => `<span class="pill p-brown">${esc(d)}</span>`).join(" ") || "-"}</td><td>${t.settings.map((d) => `<div class="mono" style="font-size:11px">${esc(d)}</div>`).join("") || "-"}</td></tr>`).join("")}</table>
+        <h3 style="margin-top:12px">Agent Skills (playbooks loaded on demand)</h3><div class="row">${bp.skills.map((s) => `<span class="pill p-green">${esc(s)}</span>`).join("") || `<span class="sub">None</span>`}</div></div>
+       <div class="card" style="margin-bottom:14px"><h2>${ltag(3)}Data this agent can reach</h2><table><tr><th>Source</th><th>Sensitivity</th><th>For this client</th></tr>${bp.datasets.map((d) => `<tr><td>${esc(d.title)}${d.personal_data ? ` <span class="pill p-grey">personal</span>` : ""}</td><td>${pill(d.classification)}</td><td>${pill(d.status)}</td></tr>`).join("") || `<tr><td colspan="3" class="empty">This agent reads no stored data</td></tr>`}</table></div>
+       <div class="card" style="margin-bottom:14px"><h2>${ltag(2)}Client rules in force (v${bp.config_version})</h2><table><tr><th>Rule</th><th>Value</th><th>Enforced in</th></tr>${bp.settings.map((s) => `<tr><td>${esc(s.label)}</td><td><b>${esc(fmtV(s.value))} ${esc(s.unit)}</b></td><td class="mono" style="font-size:11px">${esc(s.enforced)}</td></tr>`).join("") || `<tr><td colspan="3" class="empty">No client rules apply to this agent's tools</td></tr>`}</table></div>
+       <div class="card"><h2>${ltag(5)}Risk: ${pill(bp.risk.tier)} <span class="sub">score ${bp.risk.score}</span></h2><ul style="margin:4px 0 8px 18px;padding:0">${bp.risk.factors.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
+         <b>Controls required at this tier</b><div class="row" style="margin-top:6px">${bp.risk.required_controls.map((c) => `<span class="pill p-grey">${esc(c)}</span>`).join("")}</div>
+         ${bp.risk_acceptance ? `<div class="note" style="margin:10px 0 0;background:var(--green-l);border-color:#B7DFC2;color:#0B4F24">Risk accepted by <b>${esc(bp.risk_acceptance.by)}</b> on ${fmtT(bp.risk_acceptance.at)}: ${esc(bp.risk_acceptance.note)}</div>` : ""}</div></div>
+      <div class="card"><h2>${ltag(4)}The instruction Gemini actually receives</h2><div class="sub">Assembled by the factory from three sources: the agent's spec, the platform rules, and this client's rules.</div><pre style="max-height:1500px;overflow:auto">${esc(bp.instruction)}</pre>
+        <h3 style="margin-top:12px">Evaluation cases (must pass before go-live)</h3>${bp.evals.map((e) => `<div class="chk"><div><b>${esc(e.ask)}</b><div class="sub">Must call <span class="mono">${esc(e.expect_tool || "-")}</span>. ${esc(e.expect)}</div></div></div>`).join("")}</div></div>`;
+    if (tab === "versions") body = `<div class="card"><div class="row sp"><h2>Deployments</h2><div class="row"><button class="btn" onclick="rollback('${id}')" ${dis("agent.deploy")}>Roll back</button><button class="btn pri" onclick="deploy('${id}')" ${dis("agent.deploy")}>Deploy new version</button></div></div>
+        <table><tr><th>Version</th><th>Status</th><th>Risk</th><th>Gate checks</th><th>Eval score</th><th>Rules version</th><th>Fingerprint</th><th>By</th><th>When</th></tr>${deps.map((d) => `<tr class="click" onclick='showEval(${JSON.stringify(d).replace(/'/g, "&#39;")})'><td>v${d.version}</td><td>${pill(d.status)}</td><td>${pill(d.risk || "-")}</td><td>${d.gate ? `${d.gate.checks.filter((c) => c.passed).length}/${d.gate.checks.length} passed` : "-"}</td><td>${d.eval ? pct(d.eval.score) : "-"}</td><td>v${d.config_version || "-"}</td><td class="mono">${esc(d.fingerprint)}</td><td>${esc(d.created_by)}</td><td>${fmtT(d.created_at)}</td></tr>`).join("") || `<tr><td colspan="9" class="empty">Not deployed yet</td></tr>`}</table></div>`;
+    return head(esc(spec.name), esc(spec.tagline), `${me ? pill(me.status) : pill("available")} ${pill(bp.risk.tier, bp.risk.tier + " risk")} ${live ? `<span class="pill p-green">Live v${live.version}</span>` : `<button class="btn pri" onclick="wizard('${id}')" ${dis("agent.configure")}>Set up and deploy</button>`}`, 4) + `
+    <div class="tabs">${tabs.map(([t, l]) => `<a class="${t === tab ? "on" : ""}" href="#/agent/${id}/${t}">${l}</a>`).join("")}</div>${body}`;
+  },
+  async runs() { const runs = await api("/runs?limit=100"); return head("Runs & Traces", "Every run of every agent. Open one to see each rule read, data read, model call, tool call and safety check.", "", 4) + `<div class="card">${runTable(runs, true)}</div>`; },
+  async run(id, only) {
+    const r = await api("/runs/" + id);
+    if (r.status === "running") timer = setTimeout(route, 700);
+    const steps = only ? r.steps.filter((s) => String(s.layer) === only) : r.steps; const count = (n) => r.steps.filter((s) => s.layer === n).length;
+    return head(`Run trace`, `<a href="#/agent/${r.agent_id}">${esc(r.agent_name)}</a> &middot; ${esc(r.id)} &middot; ${fmtT(r.created_at)} &middot; started by ${esc(r.user)}`, pill(r.status), 4) + `
+    ${r.simulated ? `<div class="note"><b>Simulation.</b> This run used the scripted offline model. Rule reads, data reads, tool calls, approvals, safety checks and the trace are real platform behaviour; the model text is scripted.</div>` : ""}
+    <div class="grid g4">${kpi("Time", ms(r.latency_ms), "End to end")}${kpi("Cost", rs(r.cost_inr), `${r.input_tokens} in, ${r.output_tokens} out tokens`)}${kpi("Model and tool calls", `${r.model_calls} + ${r.tool_calls}`, `Under client rules v${r.config_version}`)}${kpi("Rules, data, safety", `${r.config_reads || 0} · ${r.data_reads || 0} · ${r.guardrail_events || 0}`, "Rule reads · data reads · safety events")}</div>
+    <div class="grid g21" style="margin-top:14px">
+      <div><div class="card"><h2>Request</h2><div>${esc(r.input)}</div><h2 style="margin-top:14px">Answer</h2><div class="answer">${esc(r.output) || `<span class="sub">${r.status === "waiting_approval" ? "Paused until a human decides." : "No answer yet."}</span>`}</div>${r.error ? `<pre>${esc(r.error)}</pre>` : ""}</div>
+        ${r.approvals.length ? `<div class="card" style="margin-top:14px"><h2>${ltag(5)}Approvals in this run</h2>${r.approvals.map(approvalCard).join("")}</div>` : ""}
+        ${r.actions.length ? `<div class="card" style="margin-top:14px"><h2>Actions this run performed</h2>${r.actions.map((o) => `<div class="chk"><div>${pill(o.status)} <b>${esc(o.kind.replace(/_/g, " "))}</b><div class="sub">${Object.entries(o.payload).map(([k, v]) => `${esc(k)}: ${esc(typeof v === "object" ? JSON.stringify(v) : v)}`).join(" · ").slice(0, 300)}</div></div></div>`).join("")}</div>` : ""}</div>
+      <div class="card"><div class="row sp"><h2>Step-by-step trace</h2><div class="chips" style="margin:0"><a class="chip ${only ? "" : "on"}" href="#/run/${id}">All ${r.steps.length}</a>${[2, 3, 4, 5].map((n) => `<a class="chip ${only === String(n) ? "on" : ""}" href="#/run/${id}/${n}">L${n} ${LNAME[n]} ${count(n)}</a>`).join("")}</div></div>${traceHtml(steps, only ? [] : r.approvals)}</div>
+    </div>`;
+  },
+  async actions() {
+    const rows = await api("/outbox");
+    return head("Actions taken", "What the agents actually did in your business systems: messages, orders, refunds, drafts and tasks.", "", 4) + `<div class="card"><table><tr><th>When</th><th>Type</th><th>Status</th><th>Details</th><th>Run</th></tr>
+      ${rows.map((o) => `<tr><td style="white-space:nowrap">${fmtT(o.created_at)}</td><td><span class="pill p-blue">${esc(o.kind.replace(/_/g, " "))}</span></td><td>${pill(o.status || "done")}</td><td>${Object.entries(o.payload).map(([k, v]) => `<b>${esc(k)}:</b> ${esc(typeof v === "object" ? JSON.stringify(v) : v)}`).join(" &nbsp; ")}</td><td>${o.run_id ? `<a href="#/run/${o.run_id}">trace</a>` : ""}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">No actions yet</td></tr>`}</table></div>`;
+  },
+  async builder() {
+    return head("Agent Builder", "Describe the job in plain words. Gemini drafts the agent spec. It joins the catalog only if it passes the same schema and safety checks as every other agent.", "", 4) + `
+    <div class="grid g2"><div class="card"><label>What should the agent do?</label><textarea id="brief" style="min-height:140px">An agent for a small clinic that answers billing questions from our policy notes and creates a task for the accounts team when it cannot answer.</textarea>
+      <div class="row sp" style="margin-top:10px"><span class="sub">Uses <span class="mono">${esc(META.models.pro)}</span>. Only existing tools and skills can be chosen. Money-moving tools must be approval-gated.</span><button class="btn pri" onclick="draftSpec()" ${dis("builder.use")}>Draft agent</button></div></div>
+      <div class="card"><h2>Draft spec</h2><div id="draft"><div class="empty">The draft appears here as YAML.</div></div></div></div>`;
+  },
+
+  // ===== layer 5 =====
+  async approvals() {
+    const [pend, done] = await Promise.all([api("/approvals"), api("/approvals?status=")]);
+    const past = done.filter((a) => a.status !== "pending").slice(0, 12);
+    return head("Approvals", "Actions that agents are not allowed to take alone. Nothing happens until an Approver decides. Hard limits were already checked before you were asked.", "", 5) + `
+    ${can("approval.decide") ? "" : `<div class="note">Your role (${esc(META.role)}) can see approvals but cannot decide them. Switch to Approver or Owner.</div>`}
+    ${pend.length ? `<div class="grid g2">${pend.map((a) => `<div class="card">${approvalCard(a)}</div>`).join("")}</div>` : `<div class="card empty">Nothing is waiting.</div>`}
+    <div class="card" style="margin-top:14px"><h2>Decided</h2><table><tr><th>Agent</th><th>Action</th><th>Decision</th><th>By</th><th>When</th><th>Note</th></tr>${past.map((a) => `<tr class="click" onclick="location.hash='#/run/${a.run_id}'"><td>${esc(a.agent_name)}</td><td class="mono">${esc(a.tool)}</td><td>${pill(a.status)}</td><td>${esc(a.decided_by)}</td><td>${fmtT(a.decided_at)}</td><td>${esc(a.note)}</td></tr>`).join("") || `<tr><td colspan="6" class="empty">None yet</td></tr>`}</table></div>`;
+  },
+  async governance() {
+    const g = await api("/governance/overview"); const byLayer = (n) => g.controls.filter((c) => c.layer === n);
+    return head("Governance", "Who may do what, how risky each agent is, which controls exist, and one switch that stops everything.", "", 5) + `
+    <div class="grid g4">${kpi("High-risk agents", g.tiers.High, `${g.tiers.Medium} medium, ${g.tiers.Low} low`)}${kpi("Controls in force", g.controls.length, "Across all five layers")}${kpi("Open incidents", g.incidents_open, `${g.approvals_pending} approvals waiting`)}${kpi("Audit chain", g.audit.intact ? "Intact" : "BROKEN", `${g.audit.records} records`)}</div>
+    <div class="card" style="margin-top:14px;border-color:${g.kill.engaged ? "var(--red)" : "var(--line)"}"><div class="row sp"><div><h2>Emergency stop ${g.kill.engaged ? pill("stopped", "ENGAGED") : pill("ok", "clear")}</h2>
+      <div class="sub">Stops new runs, halts running agents at their next step and cancels pending approvals, for this client only.${g.kill.engaged ? ` Engaged by <b>${esc(g.kill.by)}</b> at ${fmtT(g.kill.at)}: ${esc(g.kill.reason)}` : ""}</div></div>
+      ${g.kill.engaged ? `<button class="btn ok" onclick="kill(false)" ${dis("killswitch")}>Release</button>` : `<div class="row"><input id="killwhy" placeholder="Reason (required)" style="width:260px"><button class="btn no" onclick="kill(true)" ${dis("killswitch")}>Stop all agents</button></div>`}</div></div>
+    <div class="card" style="margin-top:14px"><h2>Risk register</h2><div class="sub" style="margin-bottom:6px">Risk is computed from what each agent can do and what data it can read. Nobody types a label.</div><table><tr><th>Agent</th><th>Risk</th><th>Why</th><th>State</th></tr>
+        ${g.register.map((a) => `<tr class="click" onclick="location.hash='#/agent/${a.id}/blueprint'"><td><b>${esc(a.name)}</b><div class="sub">${esc(a.vertical)}</div></td><td>${pill(a.tier)}<div class="sub">score ${a.score}</div></td><td>${a.factors.map((f) => `<div class="sub">• ${esc(f)}</div>`).join("")}${a.risk_acceptance ? `<div class="sub" style="color:var(--green)">Accepted by ${esc(a.risk_acceptance.by)}</div>` : a.tier === "High" ? `<div class="sub" style="color:var(--red)">No risk owner yet</div>` : ""}</td><td>${pill(a.state)}</td></tr>`).join("") || `<tr><td colspan="4" class="empty">No agents yet</td></tr>`}</table></div>
+    <div class="grid" style="margin-top:14px;grid-template-columns:minmax(0,3fr) minmax(0,2fr)">
+      <div class="card"><h2>Roles and permissions</h2><table><tr><th>Permission</th>${Object.keys(g.matrix[0]).filter((k) => k !== "permission").map((r) => `<th style="text-align:center;${r === META.role ? "color:var(--blue)" : ""}">${r}</th>`).join("")}</tr>
+        ${g.matrix.map((m) => `<tr><td>${esc(m.permission)}</td>${Object.keys(m).filter((k) => k !== "permission").map((r) => `<td style="text-align:center">${m[r] ? "✓" : `<span class="sub">–</span>`}</td>`).join("")}</tr>`).join("")}</table></div>
+       <div class="card"><h2>Safety events, last 24 hours</h2>${Object.entries(g.guardrail_events).map(([k, v]) => `<div class="row sp" style="padding:5px 0;border-bottom:1px solid #EEF1F5"><span class="mono">${esc(k)}</span><b>${v}</b></div>`).join("") || `<div class="empty">None</div>`}
+         <h3 style="margin-top:14px">What each role is for</h3>${g.roles.map((r) => `<div style="padding:5px 0"><b>${esc(r.role)}</b><div class="sub">${esc(r.what)}</div></div>`).join("")}</div>
+    </div>
+    <div class="card" style="margin-top:14px"><h2>Control inventory</h2><div class="sub" style="margin-bottom:8px">Every control, the layer it lives in, and the file that enforces it.</div>
+      ${[1, 2, 3, 4, 5].map((n) => `<h3 style="margin-top:10px">${ltag(n)}Layer ${n}: ${LNAME[n]}</h3><table>${byLayer(n).map((c) => `<tr><td style="width:44px" class="mono">${c.id}</td><td style="width:230px"><b>${esc(c.name)}</b></td><td>${esc(c.what)}</td><td class="mono" style="font-size:11px;width:250px">${esc(c.where)}</td></tr>`).join("")}</table>`).join("")}</div>`;
+  },
+  async selftest() {
+    const g = await api("/governance/overview"); const st = g.selftest;
+    return head("Safety self-test", "Fires real attacks and mistakes at the real enforcement code. No model is involved and no action is performed. Each line passes only if the platform refused.", `<button class="btn pri" onclick="runSelftest()">Run self-test now</button>`, 5) + `
+    <div id="st">${st ? selftestHtml(st) : `<div class="card empty">Not run yet for this client. Press the button.</div>`}</div>`;
+  },
+  async incidents() {
+    const rows = await api("/governance/incidents");
+    return head("Incidents", "Things the safety layer caught, and failures. Each one links to the run where it happened and needs a human to close it.", "", 5) + `<div class="card"><table><tr><th>When</th><th>Severity</th><th>What happened</th><th>Status</th><th></th></tr>
+      ${rows.map((i) => `<tr><td style="white-space:nowrap">${fmtT(i.created_at)}</td><td>${pill(i.severity === "high" ? "High" : i.severity === "medium" ? "Medium" : "Low", i.severity)}</td><td><b>${esc(i.kind.replace(/_/g, " "))}</b><div class="sub">${esc(i.summary)}</div>${i.resolution ? `<div class="sub">Closed by ${esc(i.closed_by)}: ${esc(i.resolution)}</div>` : ""}</td><td>${pill(i.status)}</td>
+        <td class="row">${i.run_id ? `<a href="#/run/${i.run_id}/5">trace</a>` : ""}${i.status === "open" ? `<button class="btn" onclick="closeIncident('${i.id}')" ${dis("incident.close")}>Close</button>` : ""}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">No incidents</td></tr>`}</table></div>`;
+  },
+  async audit() {
+    const [rows, v] = await Promise.all([api("/audit"), api("/audit/verify")]);
+    return head("Audit & evidence", "Who changed what, and when. Each record carries the hash of the one before it, so editing history breaks the chain.", `<button class="btn" onclick="route()">Verify chain</button><button class="btn pri" onclick="downloadEvidence()" ${dis("evidence.export")}>Download evidence pack</button>`, 5) + `
+    <div class="note" style="${v.intact ? "background:var(--green-l);border-color:#B7DFC2;color:#0B4F24" : "background:var(--red-l);border-color:#F2B8B5;color:#8C1D18"}"><b>${v.intact ? "Chain intact." : "CHAIN BROKEN."}</b> ${v.records} records checked.${v.intact ? (v.head ? ` Latest hash ${esc(v.head)}…` : "") : ` First broken record: #${v.broken_at_seq}.`}</div>
+    <div class="card"><table><tr><th>#</th><th>When</th><th>Who</th><th>Role</th><th>Action</th><th>Target</th><th>Detail</th><th>Hash</th></tr>
+      ${rows.map((a) => `<tr><td>${a.seq}</td><td style="white-space:nowrap">${fmtT(a.created_at)}</td><td>${esc(a.actor)}</td><td>${esc(a.role)}</td><td class="mono">${esc(a.action)}</td><td>${esc(a.target)}</td><td class="mono" style="font-size:11px">${esc(JSON.stringify(a.detail)).slice(0, 120)}</td><td class="mono" style="font-size:11px">${esc((a.hash || "").slice(0, 10))}</td></tr>`).join("") || `<tr><td colspan="8" class="empty">Empty</td></tr>`}</table></div>`;
+  },
+};
+let CFG = null;
+const kpi = (l, v, h) => `<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="h">${h}</div></div>`;
+const runTable = (runs, full) => runs.length ? `<table><tr><th>When</th><th>Agent</th>${full ? "<th>Request</th>" : ""}<th>Status</th><th>Time</th><th>Cost</th><th>Steps</th>${full ? "<th>Rules</th>" : ""}</tr>${runs.map((r) => `<tr class="click" onclick="location.hash='#/run/${r.id}'"><td style="white-space:nowrap">${fmtT(r.created_at)}</td><td><b>${esc(r.agent_name)}</b> <span class="sub">v${r.version}</span></td>${full ? `<td>${esc(r.input.slice(0, 70))}</td>` : ""}<td>${pill(r.status)}</td><td>${ms(r.latency_ms)}</td><td>${rs(r.cost_inr)}</td><td>${r.model_calls + r.tool_calls}</td>${full ? `<td>v${r.config_version}</td>` : ""}</tr>`).join("")}</table>` : `<div class="empty">No runs yet</div>`;
+function traceHtml(steps, approvals = []) {
+  if (!steps.length) return `<div class="empty">Waiting for the first step...</div>`;
+  const label = {model: "Model decision", tool: "Tool call", skill: "Agent Skill", guardrail: "Safety check", config: "Client rule", data: "Data read", approval: "Human approval"};
+  const bad = (s) => ["error", "blocked", "rejected", "denied"].includes(s.status);
+  let html = steps.map((s) => `<div class="st ${bad(s) ? "error" : s.status === "awaiting_approval" || s.kind === "approval" ? "approval" : s.kind} ${s.kind === "config" || s.kind === "data" ? "sub2" : ""}">
+    <div class="hd"><div>${ltag(s.layer || 4)}<span class="sub">${s.seq}. ${label[s.kind] || s.kind}</span> &nbsp;<span class="nm">${esc(s.name)}</span>
+      ${s.kind === "config" && s.value !== undefined ? ` = <b>${esc(fmtV(s.value))}${s.unit ? " " + esc(s.unit) : ""}</b>` : ""}
+      ${s.kind === "data" ? ` ${pill(s.classification)}${s.personal_data ? ` <span class="pill p-grey">personal</span>` : ""}` : ""}
+      ${!["ok", "read"].includes(s.status) ? pill(s.status) : ""}</div>
+    <div class="meta">${s.by && s.kind !== "approval" && (s.kind === "config" || s.kind === "data") ? `for ${esc(s.by)}` : ""}${s.latency_ms != null ? ms(s.latency_ms) : ""}${s.kind === "model" ? ` &middot; ${s.input_tokens}+${s.output_tokens} tok &middot; ${rs(s.cost_inr)}` : ""}</div></div>
+    ${s.decision ? `<div class="sub">${esc(s.decision)}</div>` : ""}${s.detail ? `<div ${s.kind === "config" || s.kind === "data" ? `class="sub"` : ""}>${esc(s.detail)}${s.kind === "data" && s.status === "read" ? ` · ${s.rows} rows · ${esc(WORDS[s.source] || s.source)}` : ""}</div>` : ""}
+    ${s.input ? `<pre>in:  ${esc(s.input)}</pre>` : ""}${s.output && s.kind !== "model" ? `<pre>out: ${esc(s.output)}</pre>` : ""}${s.output && s.kind === "model" ? `<pre>${esc(s.output)}</pre>` : ""}</div>`).join("");
+  return `<div class="tl">${html}</div>`;
+}
+const approvalCard = (a) => `<div style="margin-bottom:8px"><div class="row sp"><div><b>${esc(a.agent_name)}</b> wants to run <span class="mono">${esc(a.tool)}</span></div>${pill(a.status)}</div>
+  ${a.why ? `<div class="sub" style="margin-top:4px">Why a human is needed: ${esc(a.why)}. Requested in a run started by ${esc(a.requested_by || "")}.</div>` : ""}
+  ${a.designated && a.designated.length ? `<div class="sub" style="margin-top:2px"><b>Who may decide:</b> ${a.designated.map((u) => esc(u.name + " (" + u.title + ")")).join(", ")} <span class="pill p-grey">segregation of duties</span></div>` : ""}
+  <div class="kv" style="margin:10px 0">${Object.entries(a.args).map(([k, v]) => `<div>${esc(k)}</div><div>${esc(typeof v === "object" ? JSON.stringify(v) : v)}</div>`).join("")}</div>
+  ${a.status === "pending" ? `<input id="note-${a.id}" placeholder="Optional note for the audit log"><div class="row" style="margin-top:8px"><button class="btn ok" onclick="decide('${a.id}',true)" ${dis("approval.decide")}>Approve</button><button class="btn no" onclick="decide('${a.id}',false)" ${dis("approval.decide")}>Reject</button><a href="#/run/${a.run_id}">See the full trace</a></div>`
+  : `<div class="sub">${esc(a.status)} by ${esc(a.decided_by)} at ${fmtT(a.decided_at)} ${a.note ? "&middot; " + esc(a.note) : ""}</div>`}</div>`;
+const selftestHtml = (st) => `<div class="grid g4">${kpi("Result", `${st.passed} / ${st.total}`, st.passed === st.total ? "Every probe was refused or neutralised" : "Some probes got through")}${kpi("Client", esc(st.client), `Rules v${st.config_version}`)}${kpi("Run by", esc(st.ran_by), fmtT(st.created_at))}${kpi("Actions performed", 0, "Dry run: checks ran, nothing was sent")}</div>
+  <div class="card" style="margin-top:14px"><table><tr><th>Layer</th><th>Probe</th><th>What was attempted</th><th>What the platform did</th><th>Did the control hold?</th></tr>${st.results.map((r) => `<tr><td>${ltag(r.layer)}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.attempt)}</td><td class="sub">${esc(r.observed)}</td><td>${r.passed ? pill("ok", "held") : pill("failed", "GOT THROUGH")}</td></tr>`).join("")}</table></div>`;
+
+// ---------- actions ----------
+async function act(id, action) { try { await api(`/agents/${id}/${action}`, {method: "POST"}); route(); } catch (e) { toast(e.message); } }
+async function decide(id, approved) { try { await api(`/approvals/${id}/decision`, {method: "POST", body: {approved, note: ($("#note-" + id) || {}).value || ""}}); setTimeout(route, 500); } catch (e) { toast(e.message); } }
+async function rollback(id) { if (!confirm("Roll back to the previous version?")) return; try { await api(`/agents/${id}/rollback`, {method: "POST"}); route(); } catch (e) { toast(e.message); } }
+async function deploy(id) { modal(`<h2>Deploying</h2><div class="sub">Running the governance gate, then the evaluation gate. The new version goes live only if both pass.</div>`); try { const d = await api(`/agents/${id}/deployments`, {method: "POST"}); showEval(d); route(); } catch (e) { modal(""); toast(e.message); } }
+function showEval(d) {
+  const ev = d.eval, g = d.gate; modal(`<div class="row sp"><h2>Version v${d.version} ${pill(d.status)} ${pill(d.risk || "-", (d.risk || "") + " risk")}</h2><button class="btn" onclick="modal('')">Close</button></div>
+  ${g ? `<h3 style="margin-top:10px">${ltag(5)}Governance gate</h3>${g.checks.map(check).join("")}` : ""}
+  ${d.status === "blocked" ? `<div class="note" style="margin-top:10px">Blocked before evaluation. Fix the failed checks above and deploy again. No model calls were spent.</div>` : ""}
+  ${ev ? `<h3 style="margin-top:14px">${ltag(4)}Evaluation gate</h3><div class="grid g3" style="margin:10px 0">${kpi("Eval score", pct(ev.score), "Pass mark " + pct(ev.threshold) + " (client rule)")}${kpi("Result", ev.passed ? "Passed" : "Failed", ev.passed ? "Promoted to live" : "Not deployed")}${kpi("Test cases", ev.cases.length, d.mode === "mock" ? "Simulation" : "Live model")}</div>
+  <div class="sub" style="margin-bottom:8px">${esc(ev.note)}</div>${ev.cases.map((c) => `<div class="card" style="margin-bottom:8px"><b>${esc(c.ask)}</b><div class="row" style="margin-top:6px">${c.checks.map((k) => `<span class="pill ${k.passed ? "p-green" : "p-red"}" title="${esc(k.detail)}">${k.passed ? "Pass" : "Fail"}: ${esc(k.name)}</span>`).join("")}<a onclick="modal('');location.hash='#/run/${c.run_id}'">trace</a></div></div>`).join("")}` : ""}`);
+}
+async function showSpec(id) {
+  const s = await api("/catalog/" + id);
+  modal(`<div class="row sp"><h2>${esc(s.name)} <span class="pill p-blue">${esc(s.vertical)}</span></h2><button class="btn" onclick="modal('')">Close</button></div><div class="sub">${esc(s.tagline)}</div>
+  ${kv([["Problem", esc(s.problem)], ["Who uses it", esc(s.users)], ["Starts when", esc(s.trigger)], ["Autonomy", `<span class="pill ${AUT[s.autonomy][1]}">${AUT[s.autonomy][0]}</span>`], ["Model", `<span class="mono">${esc(s.model_id)} (thinking ${esc(s.thinking)})</span>`],
+    ["Tools", s.tools.map((t) => `<span class="pill ${s.approvals.includes(t) ? "p-amber" : "p-grey"}">${s.approvals.includes(t) ? "Approval: " : ""}${esc(t)}</span>`).join(" ")], ["Skills", s.skills.map((t) => `<span class="pill p-green">${esc(t)}</span>`).join(" ") || "None"],
+    ["Guardrails", s.guardrails.map(esc).join("<br>")], ["Success measures", s.kpis.map(esc).join("<br>")], ["Try asking", `<i>${esc(s.demo.ask)}</i>`]])}
+  <div class="row" style="justify-content:flex-end;margin-top:12px"><a onclick="modal('');location.hash='#/agent/${id}/blueprint'">See the full blueprint</a><button class="btn pri" onclick="wizard('${id}')" ${dis("agent.configure")}>Activate this agent</button></div>`);
+}
+let WZ = {};
+async function wizard(id, step = 1) {
+  if (WZ.id !== id) { const [spec, mine] = await Promise.all([api("/catalog/" + id), api("/agents")]); const me = mine.find((a) => a.id === id); WZ = {id, spec, s: me ? me.settings : {business_name: "", language: "", extra_instructions: "", extra_approvals: [], daily_run_limit: null}}; }
+  const {spec, s} = WZ; const stepCls = (n) => n < step ? "done" : n === step ? "on" : "";
+  let body = "";
+  if (step === 1) body = `<div class="sub">Language, tone, contact hours and limits come from <a onclick="WZ={};modal('');location.hash='#/config'">Client configuration</a>. Add only what is special for this agent.</div>
+    <label>Anything specific for this agent? (optional)</label><textarea id="w_extra" placeholder="For example: Always mention our helpline 1800-000-000.">${esc(s.extra_instructions)}</textarea>
+    <div class="sub">Your text is added to the agent's instruction. It cannot switch off the platform rules or the client rules.</div>
+    <label>Extra actions that need approval for this agent</label><div class="row">${spec.tools.map((t) => spec.approvals.includes(t) ? `<span class="pill p-amber">🔒 ${esc(t)}</span>` : `<label style="margin:0;font-weight:500"><input type="checkbox" style="width:auto" class="w_ap" value="${esc(t)}" ${s.extra_approvals.includes(t) ? "checked" : ""}> <span class="mono">${esc(t)}</span></label>`).join(" &nbsp; ")}</div>`;
+  if (step === 2) { const bp = await api(`/agents/${id}/blueprint`); WZ.bp = bp;
+    body = `<div class="sub">Before anything runs, the platform checks this agent against the other layers for <b>${esc(META.client.name)}</b>.</div>
+    <h3 style="margin-top:12px">${ltag(3)}Data</h3>${bp.datasets.map((d) => check({name: d.title + " (" + d.classification + ")", passed: d.status !== "none", detail: d.status === "none" ? "Not connected for this client. Connect it under Data sources." : "Connected: " + (WORDS[d.status] || d.status)})).join("") || `<div class="sub">This agent reads no stored data.</div>`}
+    <h3 style="margin-top:12px">${ltag(2)}Client rules that will apply</h3><div class="row">${bp.settings.slice(0, 12).map((x) => `<span class="pill p-teal">${esc(x.label)}: ${esc(fmtV(x.value))} ${esc(x.unit)}</span>`).join("") || `<span class="sub">None</span>`}</div>
+    <h3 style="margin-top:12px">${ltag(5)}Approvals</h3><div class="row">${bp.tools.filter((t) => t.mode !== "never").map((t) => `<span class="pill p-amber" title="${esc(t.why)}">${esc(t.tool)}: ${t.mode === "above" ? "above Rs " + t.limit : "always"}</span>`).join("") || `<span class="sub">No action of this agent needs approval</span>`}</div>
+    <h3 style="margin-top:12px">${ltag(5)}Risk: ${pill(bp.risk.tier)}</h3><ul style="margin:4px 0 0 18px;padding:0">${bp.risk.factors.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
+    ${bp.risk.tier === "High" ? (bp.risk_acceptance ? `<div class="note" style="margin-top:10px;background:var(--green-l);border-color:#B7DFC2;color:#0B4F24">Risk accepted by <b>${esc(bp.risk_acceptance.by)}</b>: ${esc(bp.risk_acceptance.note)}</div>`
+      : `<div class="note" style="margin-top:10px"><b>High-risk agent.</b> The Owner must accept the risk by name before it can go live.</div><textarea id="w_risk" placeholder="Why is this risk acceptable? For example: waivers are capped at 10 percent and always approved by a supervisor."></textarea><div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn pri" onclick="acceptRisk()" ${dis("risk.accept")}>Accept risk as ${esc(META.role)}</button></div>`) : ""}`; }
+  if (step === 3) body = `<div class="sub">Test with a sample request, then deploy. Deployment runs the governance gate and then the agent's evaluation cases.</div>
+    <label>Sample request</label><textarea id="w_ask">${esc(spec.demo.ask)}</textarea>
+    <div class="row" style="margin-top:10px"><button class="btn" onclick="wizTest()" ${dis("agent.run")}>Run test</button><button class="btn pri" onclick="wizDeploy()" ${dis("agent.deploy")}>Deploy</button></div><div id="w_out" style="margin-top:12px"></div>`;
+  modal(`<div class="row sp"><h2>Set up ${esc(spec.name)}</h2><button class="btn" onclick="WZ={};modal('');route()">Close</button></div>
+    <div class="steps"><div class="${stepCls(1)}">1. Brief the agent</div><div class="${stepCls(2)}">2. Layer checks</div><div class="${stepCls(3)}">3. Test and deploy</div></div>${body}
+    <div class="row sp" style="margin-top:16px"><button class="btn" ${step === 1 ? "disabled" : ""} onclick="wizard('${id}',${step - 1})">Back</button>${step < 3 ? `<button class="btn pri" onclick="wizNext(${step})">${step === 1 ? "Save and continue" : "Continue"}</button>` : ""}</div>`, true);
+}
+async function wizNext(step) {
+  const s = WZ.s;
+  if (step === 1) { s.extra_instructions = $("#w_extra").value; s.extra_approvals = [...document.querySelectorAll(".w_ap:checked")].map((x) => x.value);
+    try { await api(`/agents/${WZ.id}/activate`, {method: "POST", body: s}); } catch (e) { return toast(e.message); } }
+  wizard(WZ.id, step + 1);
+}
+async function acceptRisk() { try { await api(`/agents/${WZ.id}/risk-acceptance`, {method: "POST", body: {note: $("#w_risk").value}}); wizard(WZ.id, 2); } catch (e) { toast(e.message); } }
+async function wizTest() { $("#w_out").innerHTML = `<div class="sub">Running...</div>`; try { const r = await api(`/agents/${WZ.id}/runs`, {method: "POST", body: {input: $("#w_ask").value, draft: true}}); follow(r.id, (run) => { if (!$("#w_out")) return; $("#w_out").innerHTML = `<div class="row">${pill(run.status)} <span class="sub">${ms(run.latency_ms)} &middot; ${rs(run.cost_inr)}</span> <a onclick="WZ={};modal('');location.hash='#/run/${run.id}'">open trace</a></div>${run.output ? `<div class="answer" style="margin-top:8px">${esc(run.output)}</div>` : ""}${traceHtml(run.steps, run.approvals)}`; }); } catch (e) { $("#w_out").innerHTML = `<div class="note">${esc(e.message)}</div>`; } }
+async function wizDeploy() { $("#w_out").innerHTML = `<div class="sub">Running the governance gate and the evaluation gate...</div>`; try { const d = await api(`/agents/${WZ.id}/deployments`, {method: "POST"}); const id = WZ.id; WZ = {}; showEval(d); if (d.status === "live") location.hash = "#/agent/" + id; } catch (e) { $("#w_out").innerHTML = `<div class="note">${esc(e.message)}</div>`; } }
+function follow(runId, onUpdate) { const tick = async () => { const run = await api("/runs/" + runId); onUpdate(run); if (run.status === "running") setTimeout(tick, 500); else drawNav(location.hash.split("/")[1]); }; tick(); }
+async function runAgent(id, draft) {
+  $("#runbtn").disabled = true; $("#result").innerHTML = ""; $("#trace").innerHTML = `<div class="empty">Starting...</div>`;
+  try { const r = await api(`/agents/${id}/runs`, {method: "POST", body: {input: $("#ask").value, draft}});
+    follow(r.id, (run) => { if (!$("#trace")) return; $("#trace").innerHTML = traceHtml(run.steps, run.approvals); $("#tracemeta").innerHTML = `${pill(run.status)} ${ms(run.latency_ms)} &middot; ${rs(run.cost_inr)} &middot; <a href="#/run/${run.id}">full trace</a>`;
+      if (run.status !== "running") { $("#runbtn").disabled = false; $("#result").innerHTML = (run.status === "waiting_approval" ? `<div class="note"><b>Paused for approval.</b> The agent wants to take an action it may not take alone. <a href="#/approvals">Open Approvals</a></div>` : "") + (run.output ? `<div class="answer">${esc(run.output)}</div>` : "") + (run.error ? `<pre>${esc(run.error)}</pre>` : ""); } });
+  } catch (e) { $("#runbtn").disabled = false; $("#result").innerHTML = `<div class="note">${esc(e.message)}</div>`; }
+}
+let DRAFT = null;
+async function draftSpec() { $("#draft").innerHTML = `<div class="sub">Drafting...</div>`; try { DRAFT = await api("/builder/draft", {method: "POST", body: {brief: $("#brief").value}}); $("#draft").innerHTML = `${DRAFT.simulated ? `<div class="note">Simulation: this is a sample spec. Connect a Gemini API key to draft from your brief.</div>` : ""}<pre style="max-height:420px;overflow:auto">${esc(DRAFT.yaml)}</pre><div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn pri" onclick="saveSpec()">Add to catalog</button></div>`; } catch (e) { $("#draft").innerHTML = `<div class="note">${esc(e.message)}</div>`; } }
+async function saveSpec() { try { const s = await api("/builder/save", {method: "POST", body: {spec: DRAFT.spec}}); location.hash = "#/catalog/" + encodeURIComponent(s.vertical); } catch (e) { toast(e.message); } }
+// layer 2
+function readConfig() {
+  const policies = {};
+  for (const p of CFG.schema) { if (p.locked) continue; const el = $("#cf_" + p.key.replace(/\./g, "_")); if (!el) continue;
+    let v = el.value; if (p.type === "bool") v = v === "true"; else if (p.type === "int" || p.type === "float") v = Number(v); else if (p.type === "list") v = v.split(",").map((x) => x.trim()).filter(Boolean);
+    if (JSON.stringify(v) !== JSON.stringify(CFG.effective[p.key])) policies[p.key] = v; }
+  return {policies, extra_approvals: [...document.querySelectorAll(".cf_ap:checked")].map((x) => x.value)};
+}
+async function saveConfig() {
+  const ch = readConfig(); const n = Object.keys(ch.policies).length + (JSON.stringify(ch.extra_approvals.slice().sort()) !== JSON.stringify(CFG.client.extra_approvals.slice().sort()) ? 1 : 0);
+  if (!n) return toast("Nothing has changed.");
+  const note = prompt(`Save ${n} change(s) as version ${CFG.client.version + 1}. Add a note for the audit log:`, ""); if (note === null) return;
+  try { await api("/client", {method: "PUT", body: {...ch, note}}); META = {}; route(); } catch (e) { toast(e.message); }
+}
+async function rollbackConfig(v) { if (!confirm(`Restore version ${v}? This creates a new version with the old values.`)) return; try { await api("/client/rollback/" + v, {method: "POST"}); META = {}; route(); } catch (e) { toast(e.message); } }
+async function draftConfig() {
+  $("#reqout").innerHTML = `<div class="sub">Reading the requirements...</div>`;
+  try { const d = await api("/client/requirements", {method: "POST", body: {text: $("#req").value}});
+    $("#reqout").innerHTML = `<div class="sub" style="margin:8px 0">${esc(d.source)}</div>${d.proposed.map((p) => `<div class="chk"><div class="ic">→</div><div><b>${esc(p.label)}</b>: <span class="diff"><span class="o">${esc(fmtV(p.current))}</span> → <span class="nw">${esc(fmtV(p.proposed))}</span></span><div class="sub">${esc(p.reason)}</div></div></div>`).join("") || `<div class="sub">No settings matched.</div>`}
+      ${d.rejected_by_schema.map((p) => `<div class="chk"><div class="ic x">✕</div><div><b>${esc(p.key)}</b> = ${esc(p.value)}<div class="sub">Rejected by the schema: ${esc(p.why)}</div></div></div>`).join("")}
+      ${d.not_configurable.map((t) => `<div class="chk"><div class="ic x">?</div><div><b>Not a setting</b><div class="sub">${esc(t)}</div></div></div>`).join("")}
+      ${d.proposed.length ? `<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn pri" onclick='applyDraft(${JSON.stringify(d.proposed).replace(/'/g, "&#39;")})'>Put these values into the form</button></div>` : ""}`;
+  } catch (e) { $("#reqout").innerHTML = `<div class="note">${esc(e.message)}</div>`; }
+}
+function applyDraft(list) { for (const p of list) { const el = $("#cf_" + p.key.replace(/\./g, "_")); if (el) { el.value = Array.isArray(p.proposed) ? p.proposed.join(", ") : String(p.proposed); el.closest(".set").classList.add("chg"); } } toast("Values are in the form but NOT saved. Review them, then press 'Save as new version'."); }
+// layer 3
+async function showData(name) {
+  const d = await api("/data/" + name); const q = d.quality;
+  modal(`<div class="row sp"><h2>${ltag(3)}${esc(d.title)} ${pill(d.classification)} ${pill(d.status)}</h2><button class="btn" onclick="modal('');route()">Close</button></div><div class="sub">${esc(d.description)}</div>
+  ${kv([["Owner", esc(d.owner)], ["Production connector", esc(d.connector)], ["Personal fields", d.personal_fields.map(esc).join(", ") || "None"]])}
+  ${d.status !== "none" ? `<h3 style="margin-top:14px">Sample</h3><div style="overflow-x:auto"><table style="font-size:12px"><tr>${d.sample.columns.map((c) => `<th style="font-size:10px;padding:6px">${esc(c.replace(/_/g, " "))}</th>`).join("")}</tr>${d.sample.rows.map((r) => `<tr>${r.map((c) => `<td style="padding:6px;white-space:nowrap">${esc(c)}</td>`).join("")}</tr>`).join("")}</table></div><div class="sub">${esc(d.sample.note)}</div>` : `<div class="note" style="margin-top:12px">Not connected for this client. Any agent that tries to read it is refused and the attempt is logged.</div>`}
+  ${q ? `<h3 style="margin-top:14px">Quality report of the uploaded file</h3><div class="grid g4">${kpi("Rows in file", q.rows_in_file, "")}${kpi("Accepted", q.rows_accepted, pct(q.score))}${kpi("Rejected", q.rows_rejected, "Not stored")}${kpi("Personal columns", q.personal_columns.length, q.personal_columns.join(", "))}</div>
+    ${q.problems.map((p) => check({name: `Line ${p.line} (${p.key || "no id"})`, passed: false, detail: p.problems.join("; ")})).join("")}` : ""}
+  ${d.columns.length ? `<h3 style="margin-top:14px">Upload this client's own file</h3><div class="sub">Expected columns: <span class="mono">${d.columns.map((c) => esc(c.name) + (c.required ? "*" : "")).join(", ")}</span> (* required). Bad rows are rejected and listed; good rows are stored for this client only.</div>
+    <input type="file" id="csvfile" accept=".csv" style="margin-top:8px"><div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn pri" onclick="uploadData('${name}')" ${dis("data.manage")}>Validate and upload</button></div>` : ""}
+  <div class="row" style="margin-top:12px">${d.status === "none" ? `<button class="btn" onclick="connectData('${name}','sample')" ${dis("data.manage")}>Connect sample data</button>` : `<button class="btn no" onclick="connectData('${name}','none')" ${dis("data.manage")}>Disconnect</button>`}</div><div id="dataout"></div>`, true);
+}
+async function uploadData(name) { const f = $("#csvfile").files[0]; if (!f) return toast("Choose a CSV file first."); try { await api(`/data/${name}/upload`, {method: "POST", body: {text: await f.text()}}); META = {}; await route(); showData(name); } catch (e) { $("#dataout").innerHTML = `<div class="note" style="margin-top:10px">${esc(e.message)}</div>`; } }
+async function connectData(name, mode) { try { await api(`/data/${name}/connect`, {method: "POST", body: {mode}}); META = {}; await route(); showData(name); } catch (e) { toast(e.message); } }
+// layer 5
+async function kill(engaged) { if (!engaged && !confirm("Release the emergency stop? Agents will be able to run again.")) return; try { await api("/governance/kill", {method: "POST", body: {engaged, reason: engaged ? $("#killwhy").value : ""}}); META = {}; route(); } catch (e) { toast(e.message); } }
+async function runSelftest() { $("#st").innerHTML = `<div class="card empty">Running probes...</div>`; try { $("#st").innerHTML = selftestHtml(await api("/governance/selftest", {method: "POST"})); } catch (e) { $("#st").innerHTML = `<div class="note">${esc(e.message)}</div>`; } }
+async function closeIncident(id) { const note = prompt("How was this resolved? (goes into the audit log)"); if (!note) return; try { await api(`/governance/incidents/${id}/close`, {method: "POST", body: {note}}); route(); } catch (e) { toast(e.message); } }
+async function downloadEvidence() { try { const pack = await api("/governance/evidence"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(pack, null, 2)], {type: "application/json"})); a.download = `evidence-${META.client.id}.json`; a.click(); route(); } catch (e) { toast(e.message); } }
+
+
+// ---------- live plant (manufacturing) ----------
+const SCOL = {running: "p-green", warning: "p-amber", alarm: "p-red", maintenance: "p-blue"};
+const UNIT = {vibration: "mm/s", temperature: "°C", current: "A", cycle_time: "s", pressure: "bar"};
+function spark(m, s) {
+  const pts = m.recent.map((r) => r[s]); const lim = m.limits[s]; const hi = lim ? lim[1] >= lim[0] : true;
+  const vals = pts.concat([m.baseline[s]]).concat(lim ? [lim[1]] : []); const lo = Math.min(...vals), top = Math.max(...vals), span = (top - lo) || 1;
+  const W = 140, Hh = 30, y = (v) => (Hh - 2 - (v - lo) / span * (Hh - 4)).toFixed(1);
+  const line = pts.map((v, i) => `${(i / Math.max(1, pts.length - 1) * W).toFixed(1)},${y(v)}`).join(" ");
+  const last = pts[pts.length - 1]; const al = lim && ((hi && last >= lim[1]) || (!hi && last <= lim[1])); const wn = lim && !al && ((hi && last >= lim[0]) || (!hi && last <= lim[0]));
+  return `<div class="sig"><span>${s.replace("_", " ")}</span><svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none">${lim ? `<line x1="0" x2="${W}" y1="${y(lim[1])}" y2="${y(lim[1])}" stroke="#D93025" stroke-dasharray="3 3" stroke-width="1"/>` : ""}<line x1="0" x2="${W}" y1="${y(m.baseline[s])}" y2="${y(m.baseline[s])}" stroke="#9AA0A6" stroke-width="0.6"/><polyline points="${line}" fill="none" stroke="${al ? "#D93025" : wn ? "#F9AB00" : "#1A73E8"}" stroke-width="1.6"/></svg><span class="v ${al ? "al" : wn ? "wn" : ""}">${Number(last).toFixed(s === "pressure" && last < 20 ? 2 : 1)} <span class="sub">${UNIT[s]}</span></span></div>`;
+}
+const dur = (sec) => sec < 60 ? `${Math.max(1, Math.round(sec))} s` : sec < 3600 ? `${Math.floor(sec / 60)} min ${Math.round(sec % 60)} s` : `${(sec / 3600).toFixed(1)} h`;
+const hhmmss = (t) => new Date(t * 1000).toLocaleTimeString("en-IN", {hour: "2-digit", minute: "2-digit", second: "2-digit"});
+function incidentCard(i) {
+  const runs = (i.runs || []).map((r) => `<a class="chipl" href="#/run/${r.run_id}">${esc(r.agent)} ${r.status === "completed" ? "✓" : r.status === "waiting_approval" ? "⏳" : "!"}</a>`).join("");
+  return `<div class="card" style="margin-bottom:10px;border-left:4px solid ${i.status === "resolved" ? "var(--green)" : "var(--red)"}"><div class="row sp"><b>${esc(i.machine_name)} (${esc(i.machine)})</b>${pill(i.status === "resolved" ? "done" : "open", i.status)}</div>
+    <div class="sub">${esc(i.signal.replace("_", " "))} ${esc(i.value)} ${esc(i.unit)} beyond limit ${esc(i.limit)} · detected ${hhmmss(i.detected_at)}${i.status === "resolved" && i.resolved_at ? ` · machine back in ${dur(i.resolved_at - i.detected_at)}` : ""}</div>
+    ${i.root_cause ? `<div style="margin:6px 0"><b>Likely cause:</b> ${esc(i.root_cause)} <span class="pill p-purple">${Math.round(i.confidence * 100)}%</span> ${i.technician ? `· <b>Technician:</b> ${esc(i.technician)}` : ""} ${i.work_order ? `· <span class="mono">${esc(i.work_order)}</span>` : ""}</div>` : ""}
+    <div style="margin:4px 0 8px">${runs}</div><div class="tl2">${i.timeline.map((t) => `<div><span class="tm">${hhmmss(t.at)}</span><b>${esc(t.who)}</b> ${esc(t.what)}</div>`).join("")}</div></div>`;
+}
+async function plantTick() {
+  clearTimeout(timer);
+  if (!location.hash.startsWith("#/plant") && !(location.hash === "" && LANDING[META.role] === "plant")) return;
+  const box = $("#plantlive"); if (!box) return;
+  try {
+    const st = await api("/plant/state"); const k = st.kpis;
+    const open = st.incidents.filter((i) => i.status !== "resolved"), done = st.incidents.filter((i) => i.status === "resolved").slice(0, 3);
+    box.innerHTML = `<div class="grid g4" style="grid-template-columns:repeat(6,1fr)">${kpi("Machines running", `${k.running} / ${k.machines}`, `${k.attention} need attention`)}${kpi("Open incidents", k.open_incidents, k.auto_response ? "Automatic response ON" : "Automatic response OFF")}
+      ${kpi("Alarm to technician", k.avg_min_to_technician == null ? "-" : k.avg_min_to_technician < 1 ? dur(k.avg_min_to_technician * 60) : k.avg_min_to_technician + " min", "Average, all incidents")}${kpi("Time to acknowledge", k.avg_min_to_acknowledge == null ? "-" : k.avg_min_to_acknowledge < 1 ? dur(k.avg_min_to_acknowledge * 60) : k.avg_min_to_acknowledge + " min", "Technician response")}
+      ${kpi("Time to resolve", k.avg_min_to_resolve == null ? "-" : k.avg_min_to_resolve < 1 ? dur(k.avg_min_to_resolve * 60) : k.avg_min_to_resolve + " min", "Alarm to machine running")}${kpi("Downtime cost", rs(k.downtime_cost_inr), `At ${rs(k.cost_per_hour_inr)} per hour (client rule)`)}</div>
+      <div style="margin-top:14px"><div><div class="mgrid">${st.machines.map((m) => `<div class="card mc ${m.status}"><div class="row sp"><div><div class="t">${esc(m.name)}</div><div class="s">${esc(m.machine_id)} · ${esc(m.line)}</div></div>${pill(m.status === "running" ? "ok" : m.status === "alarm" ? "failed" : m.status === "warning" ? "pending" : "running", m.status)}</div>
+        ${Object.keys(m.latest).map((s) => spark(m, s)).join("")}${m.simulated_fault ? `<div class="sub" style="margin-top:6px;color:#B06000">Simulated fault (presenter only): ${esc(m.simulated_fault)}</div>` : ""}</div>`).join("")}</div></div>
+        <div class="card" style="margin-top:14px"><h2>Incidents: what DOS did, step by step</h2>${open.length ? `<div class="grid g2">${open.map(incidentCard).join("")}</div>` : `<div class="empty">No open incidents. Every machine is inside its limits.</div>`}${done.length ? `<h3 style="margin-top:12px">Recently resolved</h3><div class="grid g2">${done.slice(0, 2).map(incidentCard).join("")}</div>` : ""}</div></div>`;
+  } catch (e) { box.innerHTML = `<div class="note">${esc(e.message)}</div>`; }
+  timer = setTimeout(plantTick, 2000);
+}
+async function simFault() { try { const r = await api("/plant/faults", {method: "POST", body: {machine: $("#simm").value, fault: $("#simf").value}}); toastSoft(r.note); } catch (e) { toast(e.message); } }
+async function simReset() { try { await api("/plant/clear/" + $("#simm").value, {method: "POST"}); } catch (e) { toast(e.message); } }
+function toastSoft(msg) { const el = $("#simmsg"); if (el) el.textContent = msg; }
+pages.plant = async () => {
+  if (!META.plant) return `<div class="note">This company has no live plant connected.</div>`;
+  const st = await api("/plant/state");
+  const sim = can("plant.simulate") ? `<div class="simbar"><b>Demo control (presenter only):</b> make a machine drift the way a real fault would. DOS is not told which fault; it must detect and diagnose it.
+    <select id="simm" onchange="simFilter()">${st.machines.map((m) => `<option value="${esc(m.machine_id)}" data-type="${esc(m.type)}">${esc(m.machine_id)} ${esc(m.name)}</option>`).join("")}</select>
+    <select id="simf">${Object.entries(st.faults).map(([k, f]) => `<option value="${esc(k)}" data-types="${esc(f.types.join(","))}">${esc(f.label)}</option>`).join("")}</select>
+    <button class="btn no" onclick="simFault()">Simulate fault</button><button class="btn" onclick="simReset()">Reset machine</button><span id="simmsg" class="sub"></span></div>` : "";
+  setTimeout(simFilter, 0);
+  return head("Plant floor", "Live condition of every machine, every 2 seconds. A confirmed alarm starts the six-agent downtime response automatically.", "", 4) + sim + `<div id="plantlive"><div class="empty">Loading the plant...</div></div>`;
+};
+function simFilter() { const m = $("#simm"), f = $("#simf"); if (!m || !f) return; const t = m.selectedOptions[0].dataset.type; let first = null; [...f.options].forEach((o) => { const okk = o.dataset.types.split(",").includes(t); o.hidden = !okk; if (okk && !first) first = o; }); if (f.selectedOptions[0].hidden && first) f.value = first.value; }
+const WOS = {assigned: "p-amber", acknowledged: "p-blue", in_progress: "p-purple", resolved: "p-green", unassigned: "p-red"};
+let CAUSES = [];
+pages.workorders = async () => {
+  if (!META.plant) return `<div class="note">This company has no live plant connected.</div>`;
+  const rows = await api("/workorders" + (META.role === "technician" ? "?mine=true" : ""));
+  CAUSES = await api("/plant/causes");
+  const mine = META.role === "technician";
+  const act = (w) => !can("workorder.update") || (mine && w.technician_id !== (META.user || {}).technician_id) ? "" :
+    w.status === "assigned" ? `<button class="btn pri" onclick="woAct('${w.id}','ack')">Acknowledge</button>` : w.status === "acknowledged" ? `<button class="btn pri" onclick="woAct('${w.id}','start')">Start repair (lock out machine)</button>` : w.status === "in_progress" ? `<button class="btn ok" onclick="woResolve('${w.id}')">Close: confirm cause</button>` : "";
+  return head(mine ? "My work orders" : "Work orders", mine ? "Breakdowns assigned to you by FixDispatch, with the diagnosis and the part. Acknowledge quickly: DOS escalates to your supervisor if you do not." : "Every maintenance work order created by FixDispatch, and where it stands.", "", 5) +
+    (rows.length ? `<div class="grid g2">${rows.map((w) => `<div class="card" style="border-left:4px solid ${w.status === "resolved" ? "var(--green)" : w.escalated ? "var(--red)" : "var(--blue)"}"><div class="row sp"><div><b>${esc(w.title)}</b><div class="sub"><span class="mono">${esc(w.id)}</span> · ${esc(w.machine_name)} (${esc(w.machine)}) · priority ${esc(w.priority)}</div></div><span class="pill ${WOS[w.status] || "p-grey"}">${esc(w.status.replace("_", " "))}</span></div>
+      <div style="margin:8px 0"><b>Diagnosis from DOS:</b> ${esc(w.diagnosis)}</div>${kv([["Technician", esc(w.technician_name || "unassigned")], ["Spare part", esc(w.part || "none")], ["Assigned", fmtT(w.assigned_at)], ["Acknowledged", fmtT(w.acknowledged_at) || (w.escalated ? `<span style="color:var(--red)">Not acknowledged in time: escalated to supervisor</span>` : "waiting")], ["Resolved", w.resolution ? `${fmtT(w.resolved_at)}: ${esc(w.resolution.confirmed_cause.replace(/_/g, " "))}, ${w.resolution.minutes} min. ${esc(w.resolution.notes)}` : "-"]])}
+      <div class="row" style="margin-top:10px">${act(w)}</div></div>`).join("")}</div>` : `<div class="card empty">${mine ? "Nothing assigned to you. When a machine alarm is diagnosed, your work order appears here." : "No work orders yet."}</div>`);
+};
+async function woAct(id, action) { try { await api(`/workorders/${id}/${action}`, {method: "POST", body: {}}); route(); } catch (e) { toast(e.message); } }
+function woResolve(id) {
+  modal(`<h2>Close work order</h2><div class="sub">Confirm what the cause really was. Your answer is added to the repair history, so RootCauseIQ learns from it.</div>
+    <label>Confirmed cause</label><select id="woc">${CAUSES.map((c) => `<option value="${esc(c.key)}">${esc(c.label)}</option>`).join("")}</select>
+    <label>What you found and did</label><textarea id="won" placeholder="For example: front bearing pitted, replaced the matched pair, set preload, ran in at 50 percent speed."></textarea>
+    <label>Repair minutes</label><input id="wom" type="number" value="60" min="1">
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" onclick="modal('')">Cancel</button><button class="btn ok" onclick="woClose('${id}')">Close and return machine to production</button></div>`);
+}
+async function woClose(id) { try { await api(`/workorders/${id}/resolve`, {method: "POST", body: {confirmed_cause: $("#woc").value, notes: $("#won").value, minutes: Number($("#wom").value)}}); modal(""); route(); } catch (e) { toast(e.message); } }
+
+// ---------- router ----------
+async function route() {
+  clearTimeout(timer);
+  if (!TOKEN()) return showLogin(localStorage.getItem("dos_client"));
+  const [, page = "", arg, arg2] = location.hash.split("/");
+  try { if (!META.client) { META = await api("/meta"); await drawWho(); } else { META.kill = (await api("/meta")).kill; } }
+  catch (e) { return; }
+  const name = page || LANDING[META.role] || "overview";
+  const fn = pages[name] || pages.overview;
+  try { $("#view").innerHTML = await fn(arg, arg2); } catch (e) { $("#view").innerHTML = `<div class="note">${esc(e.message)}</div>`; }
+  drawNav(name === "agent" ? "agents" : name === "run" ? "runs" : name);
+  if (name === "plant") plantTick();
+}
+window.addEventListener("hashchange", route); route();
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+{
+  "eval_set_id": "loanprocess_core",
+  "name": "LoanProcess core behaviours",
+  "description": "Follow-up on an overdue loan must load the account and message the customer; a waiver must go through offer_settlement.",
+  "eval_cases": [
+    {
+      "eval_id": "followup_ln1002",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Follow up on loan LN-1002. The customer asked for a small waiver last week."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I sent Kavitha a polite reminder in Tamil for the overdue EMI of Rs 6,250 and proposed a 5% late-fee waiver that is waiting for approval."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_loan_account",
+                "args": {
+                  "loan_id": "LN-1002"
+                }
+              },
+              {
+                "name": "send_message",
+                "args": {
+                  "channel": "whatsapp",
+                  "to": "+91-90000-01002",
+                  "text": "Vanakkam Kavitha, your EMI of Rs 6,250 for loan LN-1002 was due on 2 November. Can you tell us a date this week when you can pay? Thank you."
+                }
+              }
+            ],
+            "intermediate_responses": []
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "loanprocess",
+        "user_id": "eval",
+        "state": {}
+      }
+    }
+  ]
+}

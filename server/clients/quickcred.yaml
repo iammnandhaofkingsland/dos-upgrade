@@ -1,0 +1,21 @@
+# A digital micro-lender. Hindi first, tighter waiver limit, shorter contact window, separate approver,
+# and every outbound message needs approval. Its loan book is NOT connected yet: the demo uploads it.
+id: quickcred
+name: QuickCred Micro Loans
+industry: App-based micro loans, North India
+verticals: [Fintech]
+accent: "#C2410C"
+contact: risk@quickcred.example
+datasets: {loans: none, knowledge: sample, transactions: sample, account_txns: sample, risk: sample, kyc_docs: sample}
+extra_approvals: [send_message]
+policies:
+  messaging.language: Hindi
+  messaging.tone: Formal
+  messaging.contact_start: "09:00"
+  messaging.contact_end: "18:00"
+  messaging.allowed_channels: [sms, whatsapp]
+  lending.max_waiver_pct: 5
+  lending.min_paid_instalments_for_waiver: 8
+  lending.min_credit_score: 700
+  governance.four_eyes: true
+  budgets.monthly_cost_cap_inr: 2000
