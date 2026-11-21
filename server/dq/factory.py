@@ -13,6 +13,7 @@ from google.adk import Agent
 from google.adk.skills import load_skill_from_dir
 from google.adk.tools import FunctionTool
 from google.adk.tools.skill_toolset import SkillToolset
+from google.adk.models.google_llm import Gemini
 from google.genai import types
 
 from . import config
@@ -136,7 +137,9 @@ def build_agent(spec: AgentSpec, settings: dict | None = None, mode: str | None 
         model = MockGemini(spec=spec)
         gen_config = None
     else:
-        model = config.resolve_model(spec.model)
+        # Gemini with automatic retries: a busy or rate-limited moment (429, 500, 503) is retried with a growing
+        # pause instead of failing the run. Errors that a retry cannot fix (bad key, unknown model) fail at once.
+        model = Gemini(model=config.resolve_model(spec.model), retry_options=config.RETRY)
         # thinking_level is the Gemini 3.x / 4 control (low, medium, high). Sampling parameters such as
         # temperature are ignored by these models, so we do not send them.
         gen_config = types.GenerateContentConfig(thinking_config=types.ThinkingConfig(thinking_level=spec.thinking))

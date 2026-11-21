@@ -18,11 +18,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from . import access, ask, clients, config, data, governance, launcher
+from . import access, ask, clients, config, data, events, gold, governance, launcher
 from .api import need, require_key
 from .context import current_actor, current_client, current_role, current_user
 from .spec import VERTICALS, AgentSpec
-from .store import get_store, verify_audit
+from .store import audit, get_store, verify_audit
 
 DOMAIN_ICONS = {"Fintech": "bank", "Manufacturing": "factory", "Wholesale": "truck", "Retail": "store", "E-commerce": "cart",
                 "Healthcare": "heart", "Digital Marketing": "megaphone", "Data Automation": "database"}
@@ -39,7 +39,7 @@ ACTIONS = {  # audit action -> (kind, plain-English verb)
     "work_order.start": ("people", "repair started"), "work_order.resolve": ("ok", "repair closed"), "selftest.run": ("ok", "safety self-test run"),
     "evidence.exported": ("ok", "evidence pack exported"), "catalog.agent_added": ("agent", "new agent added"), "auth.code_locked": ("bad", "sign-in paused after wrong codes"),
     "auth.login_failed": ("bad", "sign-in failed"),
-    "ask.answered": ("people", "asked DOS a question"), "ask.refused": ("bad", "Ask DOS refused an instruction"),
+    "ask.answered": ("people", "asked DOS a question"), "data.gold_viewed": ("data", "gold-layer data viewed (masked)"), "ask.refused": ("bad", "Ask DOS refused an instruction"),
 }
 
 
@@ -285,6 +285,59 @@ def build_app_router(catalog: dict[str, AgentSpec], manager) -> APIRouter:
                        f"Self-test {st['passed']}/{st['total']}" if st else "Self-test not run yet"],
              "status": "stop" if kill.get("engaged") else "ok", "page": "safety", "trace_steps": by_layer[5]},
         ], "client": c["name"], "mode": config.MODEL_MODE}
+
+    # ------------------------------------------------------------------ gold-layer data (owner and ops manager), PII masked
+    @r.get("/gold")
+    def gold_overview():
+        layers_only()
+        return {"agents": gold.overview(sorted(visible().values(), key=lambda s: (VERTICALS.index(s.vertical) if s.vertical in VERTICALS else 99, s.name))),
+                "verticals": [v for v in VERTICALS if v in {s.vertical for s in visible().values()}]}
+
+    @r.get("/gold/{agent_id}")
+    def gold_agent(agent_id: str):
+        layers_only()
+        spec = spec_or_404(agent_id)
+        out = gold.agent_view(spec)
+        audit(current_actor(), "data.gold_viewed", spec.id, {"datasets": out["lineage"]["datasets"], "masked": True})
+        return out
+
+    # ------------------------------------------------------------------ event watch: what each agent is waiting for
+    @r.get("/events")
+    def event_watch(vertical: str = "all"):
+        specs = [s for s in visible().values() if vertical in ("all", s.vertical)]
+        specs.sort(key=lambda s: (VERTICALS.index(s.vertical) if s.vertical in VERTICALS else 99, s.tier != "hero", s.name))
+        out = events.watch(specs)
+        out["can_run"] = governance.allowed("agent.run")
+        out["mode"] = config.MODEL_MODE
+        return out
+
+    # ------------------------------------------------------------------ Gemini connection check (owner and ops manager)
+    _check_cache: dict = {}
+
+    @r.get("/gemini-check")
+    def gemini_check(fresh: bool = False):
+        """One tiny call per model alias, so a reviewer (or the presenter, before the demo) knows live mode works."""
+        layers_only()
+        ok, why = config.gemini_ready()
+        if not ok:
+            return {"ready": False, "reason": why, "models": [], "mode": config.MODEL_MODE}
+        if not fresh and _check_cache.get("at", 0) > time.time() - 120:
+            return _check_cache["result"]
+        from google import genai  # noqa: PLC0415
+        from google.genai import types as gt  # noqa: PLC0415
+        client = genai.Client(http_options=gt.HttpOptions(timeout=30_000))
+        models = []
+        for alias in ("flash", "lite", "pro"):
+            mid, t0 = config.resolve_model(alias), time.perf_counter()
+            try:
+                txt = client.models.generate_content(model=mid, contents="Reply with the single word OK.").text or ""
+                models.append({"alias": alias, "model": mid, "ok": True, "ms": round((time.perf_counter() - t0) * 1000), "reply": txt.strip()[:20]})
+            except Exception as exc:  # report, never crash the page
+                err = f"{type(exc).__name__}: {exc}"[:300]
+                models.append({"alias": alias, "model": mid, "ok": False, "ms": round((time.perf_counter() - t0) * 1000), "error": err, "hint": config.explain_error(err)})
+        result = {"ready": all(m["ok"] for m in models), "reason": why, "models": models, "mode": config.MODEL_MODE, "checked_at": time.time()}
+        _check_cache.update(at=time.time(), result=result)
+        return result
 
     @r.get("/versions")
     def versions():

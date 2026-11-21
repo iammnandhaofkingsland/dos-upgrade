@@ -1,8 +1,8 @@
 # A digital micro-lender. Hindi first, tighter waiver limit, shorter contact window, separate approver,
 # and every outbound message needs approval. Its loan book is NOT connected yet: the demo uploads it.
 id: quickcred
-name: QuickCred Micro Loans
-industry: App-based micro loans, North India
+name: Lumora Credit
+industry: Digital consumer lending
 verticals: [Fintech]
 accent: "#C2410C"
 contact: risk@quickcred.example

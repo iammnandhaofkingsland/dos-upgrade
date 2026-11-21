@@ -178,7 +178,9 @@ async def launch(manager, spec: AgentSpec, actor: str, text: str = "", mode: str
     """Prepare (if needed) and run one agent, streaming every stage and step."""
     a = spec.id
     blocked = False
-    async for ev in prepare(manager, spec, actor, eval_mode or config.MODEL_MODE):
+    # The evaluation gate in the launcher runs the agent's test cases in simulation by default (BULK_EVAL_MODE), so
+    # preparing never fails on a Gemini quota. The deployment records the mode; the Agents screen can re-evaluate on Gemini.
+    async for ev in prepare(manager, spec, actor, eval_mode or BULK_EVAL_MODE):
         blocked = blocked or ev["status"] in ("blocked", "failed")
         yield ev
     if blocked:
@@ -203,6 +205,11 @@ async def launch(manager, spec: AgentSpec, actor: str, text: str = "", mode: str
         return
     live = live_deployment(a)
     run_mode = (mode or config.MODEL_MODE).lower()
+    if run_mode != "mock":
+        ok, why = config.gemini_ready()
+        if not ok:
+            yield _stage(a, "run", "blocked", f"Gemini is not set up: {why} Choose Simulation to run now.")
+            return
     yield _stage(a, "run", "running", "Simulation (scripted model, real tools and rules)" if run_mode == "mock" else "Gemini is working the request")
     run = await manager.start(spec, text or spec.demo.ask, settings=live["settings"], version=live["version"], mode=run_mode, user=actor, purpose="run")
     final = None
@@ -219,8 +226,12 @@ async def launch(manager, spec: AgentSpec, actor: str, text: str = "", mode: str
                 final = ev["run"]
             yield ev
     status = (final or {}).get("status", "unknown")
+    if status == "running":  # still working after the watch window: say so instead of calling it finished
+        yield _stage(a, "run", "done", "Still working in the background. Open Runs to follow it.")
+        return
     label = {"completed": "done", "waiting_approval": "waiting for a person", "failed": "failed", "stopped": "stopped by the emergency stop"}.get(status, status)
-    yield _stage(a, "run", "failed" if status == "failed" else "done", f"Run {label}")
+    hint = (final or {}).get("error_hint") if status == "failed" else ""
+    yield _stage(a, "run", "failed" if status == "failed" else "done", f"Run {label}" + (f". {hint}" if hint else ""))
 
 
 async def _merge(gens: list) -> AsyncIterator[dict]:

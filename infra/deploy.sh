@@ -28,7 +28,7 @@ gcloud run deploy "$SERVICE" \
 URL=$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
 echo "Deployed: $URL"
 echo "Smoke test:"
-curl -fsS "$URL/healthz" && echo
+curl -fsS "$URL/health" && echo   # /healthz is reserved by Cloud Run on the public address, so DOS also answers /health
 echo "Open $URL in a browser and sign in (reviewer quick access is on while DQ_DEMO_LOGINS=1)."
 # Why these flags:
 #  --min-instances 1      no cold start in front of the jury

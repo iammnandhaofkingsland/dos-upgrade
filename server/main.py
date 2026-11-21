@@ -118,13 +118,18 @@ def create_app() -> FastAPI:
     def healthz():
         return JSONResponse({"status": "ok", "agents": len(catalog), "mode": config.MODEL_MODE, "store": config.STORE})
 
+    @app.get("/health")  # Cloud Run keeps /healthz for itself on the public address; this one reaches DOS
+    def health():
+        return healthz()
+
     console = HERE / "console"
     if console.exists():
         app.mount("/assets", StaticFiles(directory=console), name="assets")
 
         @app.get("/")
         def index():
-            return FileResponse(console / "index.html")
+            # no-cache: after every deployment browsers fetch the newest app instead of a saved copy
+            return FileResponse(console / "index.html", headers={"Cache-Control": "no-cache"})
 
     log.info("DOS ready: %d agents, mode=%s, store=%s", len(catalog), config.MODEL_MODE, config.STORE)
     return app

@@ -47,6 +47,10 @@ async def main():
         await pg.goto(BASE + "#audit"); await shot(pg, "ui2_audit")
         await pg.goto(BASE + "#activity"); await shot(pg, "ui2_activity")
         await pg.goto(BASE + "#approvals"); await shot(pg, "ui2_approvals_owner")
+        await pg.goto(BASE + "#events/Fintech"); await shot(pg, "ui2_events", 2000)
+        await pg.click("#ew-kyc-autoflow [data-deliver][data-q='2']"); await pg.wait_for_timeout(8000)
+        el = await pg.query_selector("#ew-kyc-autoflow"); await el.screenshot(path=OUT + "ui2_event_delivered.png")
+        await pg.goto(BASE + "#gold/kyc-autoflow"); await shot(pg, "ui2_gold", 2000, True)
         await pg.goto(BASE + "#studio/Fintech"); await pg.wait_for_timeout(1200)
         await pg.click("#ag-loanprocess"); await pg.wait_for_timeout(500); await pg.click("#goBtn"); await pg.wait_for_timeout(4500)
         await pg.screenshot(path=OUT + "ui2_launch_wait.png")
@@ -68,7 +72,7 @@ async def main():
         # ---- Auditor
         await login(pg, "demo", 4); await shot(pg, "ui2_home_auditor", 1500)
         await pg.goto(BASE + "#audit"); await shot(pg, "ui2_audit_auditor")
-        # ---- Kaveri plant: owner prepares chain and simulates a fault
+        # ---- Axion plant: owner prepares chain and simulates a fault
         await login(pg, "kaveri", 0); await pg.goto(BASE + "#plant"); await pg.wait_for_timeout(1500)
         if await pg.query_selector("#prepChain"):
             await pg.click("#prepChain"); await pg.wait_for_timeout(6000)
@@ -78,6 +82,7 @@ async def main():
         await pg.click("#fGo"); await pg.wait_for_timeout(40000)
         await pg.screenshot(path=OUT + "ui2_plant_alarm.png")
         await pg.wait_for_timeout(15000); await pg.screenshot(path=OUT + "ui2_plant_chain.png", full_page=True)
+        await pg.goto(BASE + "#events/Manufacturing"); await shot(pg, "ui2_events_alarm", 2500)
         await pg.goto(BASE + "#home"); await shot(pg, "ui2_home_plant_owner", 2000)
         # ---- technician of kaveri: index of the TEC-11 person
         roster = await pg.evaluate("fetch('/api/auth/roster?client=kaveri').then(r=>r.json())")

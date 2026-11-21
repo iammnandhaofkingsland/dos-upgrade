@@ -644,7 +644,9 @@ def build_router(catalog: dict[str, AgentSpec], manager: RunManager) -> APIRoute
             if wo:
                 assigned.append((wo["assigned_at"] - i["detected_at"]) / 60)
         acked = [((w["acknowledged_at"] - w["assigned_at"]) / 60) for w in wos if w.get("acknowledged_at")]
-        down_min = sum(i.get("minutes_to_resolve") or (time.time() - i["detected_at"]) / 60 for i in incidents)
+        # Downtime stops counting the moment an incident is resolved (by a technician or by a simulation reset).
+        down_min = sum(i["minutes_to_resolve"] if i.get("minutes_to_resolve") is not None else ((i.get("resolved_at") or time.time()) - i["detected_at"]) / 60
+                       for i in incidents)
         return {"machines": machines, "incidents": incidents, "work_orders": wos,
                 "kpis": {"machines": len(machines), "running": sum(m["status"] == "running" for m in machines),
                          "attention": sum(m["status"] in ("warning", "alarm", "maintenance") for m in machines),
@@ -679,7 +681,15 @@ def build_router(catalog: dict[str, AgentSpec], manager: RunManager) -> APIRoute
         pl.clear(machine_id)
         inc = plant.open_incident(machine_id)
         if inc:
-            store().update("plant_incidents", inc["id"], {"status": "resolved", "resolved_at": time.time(), "timeline": inc["timeline"] + [{"at": time.time(), "who": actor, "what": "Simulation reset by presenter"}]})
+            now_t = time.time()
+            store().update("plant_incidents", inc["id"], {"status": "resolved", "resolved_at": now_t, "minutes_to_resolve": round((now_t - inc["detected_at"]) / 60, 1),
+                                                          "root_cause_confirmed": "simulation_reset",
+                                                          "timeline": inc["timeline"] + [{"at": now_t, "who": actor, "what": "Simulation reset by presenter"}]})
+            for w in store().list("work_orders", limit=200):   # the repair job is no longer needed
+                if w.get("incident_id") == inc["id"] and w["status"] != "resolved":
+                    store().update("work_orders", w["id"], {"status": "cancelled", "cancelled_at": now_t, "cancel_reason": "Simulation reset by presenter"})
+                    if w.get("technician_id"):  # the technician is free again for the next breakdown
+                        plant.set_overlay("technicians", w["technician_id"], status="available")
         audit(actor, "plant.simulation_reset", machine_id)
         return {"ok": True}
 

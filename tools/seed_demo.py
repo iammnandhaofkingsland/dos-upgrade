@@ -4,8 +4,8 @@ Works in simulation mode and in live mode (live mode calls Gemini and costs a fe
 
 It signs in as different PEOPLE (owner, operator, approver, technician, auditor) through the same API the console
 uses, so the audit log, the approvals and the four-eyes rule all look the way they will in real use.
-QuickCred is deliberately left half set up (loan data not connected): you finish it live on stage.
-Kaveri Precision (the plant) gets one machine breakdown handled end to end, and one left open for the technician."""
+Lumora is deliberately left half set up (loan data not connected): you finish it live on stage.
+Axion Precision (the plant) gets one machine breakdown handled end to end, and one left open for the technician."""
 import os
 import sys
 import time
@@ -76,7 +76,7 @@ def run(client, agent_id, ask=None, decision=None, minutes_ago=0):
     return rid
 
 
-print("Sri Balaji Finance (lender)")
+print("Northvale Capital (lender)")
 SB = "sri-balaji"
 call("PUT", "/client", SB, json={"policies": {"messaging.test_clock": "11:00"}, "note": "Rehearsal: fix the clock inside contact hours"})
 for a in ("loanprocess", "compliancebot", "fraudshield", "kyc-autoflow", "queryiq"):
@@ -93,7 +93,7 @@ run(SB, "queryiq", minutes_ago=30)
 run(SB, "loanprocess", "Follow up on loan LN-1002. The customer says her Aadhaar is 1234 5678 9012 and asked for a small waiver.", decision=None)  # left waiting on purpose
 call("POST", "/governance/selftest", SB, "auditor")
 
-print("Marigold Clothing (online brand)")
+print("Aurevia Apparel (online brand)")
 MG = "marigold"
 for a in ("returnsbot", "reviewmine", "contentgen", "inventoryiq", "pricewatch"):
     go_live(MG, a)
@@ -102,7 +102,7 @@ for agent, decision, ago in [("returnsbot", None, 1200), ("contentgen", True, 10
     run(MG, agent, decision=decision, minutes_ago=ago)
 call("POST", "/governance/selftest", MG, "auditor")
 
-print("CarePoint Clinic")
+print("Meridia Health Group")
 CP = "carepoint"
 call("PUT", "/client", CP, json={"policies": {"messaging.test_clock": "10:30"}, "note": "Rehearsal clock"})
 for a in ("apptiq", "claimssmart"):
@@ -110,7 +110,7 @@ for a in ("apptiq", "claimssmart"):
 for agent, decision, ago in [("apptiq", True, 900), ("claimssmart", None, 500), ("apptiq", True, 150), ("apptiq", None, 0)]:
     run(CP, agent, decision=decision, minutes_ago=ago)
 
-print("QuickCred Micro Loans (left half set up on purpose)")
+print("Lumora Credit (left half set up on purpose)")
 QC = "quickcred"
 call("PUT", "/client", QC, json={"policies": {"messaging.test_clock": "11:00"}, "note": "Rehearsal clock"})
 call("POST", "/agents/loanprocess/activate", QC, "operator", json={})
@@ -121,7 +121,7 @@ go_live(QC, "compliancebot")
 run(QC, "compliancebot")
 call("POST", "/governance/selftest", QC, "auditor")
 
-print("Kaveri Precision Components (the plant)")
+print("Axion Precision Works (the plant)")
 KV = "kaveri"
 for a in ("machinewatch", "rootcauseiq", "fixdispatch", "sparesense", "plansync", "lottrace", "oeepulse", "predictmaint", "qualitylens", "shiftbrief", "energywatch", "materialflow", "matchguard"):
     go_live(KV, a)
@@ -164,4 +164,4 @@ call("POST", "/plant/faults", KV, "operator", json={"machine": "PRS-501", "fault
 inc = wait_incident("PRS-501", lambda i: i.get("work_order") is not None)
 print(f"  kaveri      PRS-501 incident {inc['id']} open, work order {inc['work_order']} waiting for the technician")
 call("POST", "/governance/selftest", KV, "auditor")
-print("done. Kaveri has an open press breakdown; Sri Balaji has one approval waiting; QuickCred LoanProcess is waiting for its data.")
+print("done. Axion has an open press breakdown; Northvale has one approval waiting; Lumora LoanProcess is waiting for its data.")

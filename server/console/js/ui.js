@@ -35,7 +35,7 @@
   const STATUS = { completed: ["ok", "Done"], waiting_approval: ["warn", "Waiting for a person"], running: ["info", "Working"], failed: ["bad", "Failed"],
     stopped: ["bad", "Stopped"], live: ["ok", "Live"], configured: ["info", "Switched on"], available: ["", "Ready to launch"], pending: ["warn", "Waiting"],
     approved: ["ok", "Approved"], rejected: ["bad", "Rejected"], assigned: ["warn", "Assigned"], acknowledged: ["info", "Acknowledged"], in_progress: ["info", "In progress"],
-    resolved: ["ok", "Resolved"], detected: ["bad", "Detected"], diagnosed: ["warn", "Diagnosed"], dispatched: ["info", "Dispatched"], unassigned: ["bad", "Unassigned"],
+    resolved: ["ok", "Resolved"], cancelled: ["", "Cancelled"], detected: ["bad", "Detected"], diagnosed: ["warn", "Diagnosed"], dispatched: ["info", "Dispatched"], unassigned: ["bad", "Unassigned"],
     running_m: ["ok", "Running"], warning: ["warn", "Warning"], alarm: ["bad", "Alarm"], maintenance: ["info", "Under repair"], repairing: ["info", "Repairing"],
     High: ["bad", "High risk"], Medium: ["warn", "Medium risk"], Low: ["ok", "Low risk"], open: ["bad", "Open"], closed: ["ok", "Closed"] };
   DOS.status = (s) => { const [c, t] = STATUS[s] || ["", DOS.title(s)]; return `<span class="chip dot ${c}">${esc(t)}</span>`; };
@@ -70,7 +70,7 @@
   /* ---------- numbers that count up when they appear ---------- */
   DOS.countUp = (root = document) => {
     DOS.qsa("[data-count]", root).forEach((el) => {
-      const end = parseFloat(el.dataset.count) || 0, dec = (el.dataset.count.split(".")[1] || "").length, t0 = performance.now(), dur = 900;
+      const end = parseFloat(el.dataset.count) || 0, dec = (el.dataset.count.split(".")[1] || "").length, t0 = performance.now(), dur = 600;
       const step = (t) => { const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
         el.textContent = (end * e).toLocaleString("en-IN", { minimumFractionDigits: dec, maximumFractionDigits: dec }); if (p < 1) requestAnimationFrame(step); };
       requestAnimationFrame(step);
@@ -102,13 +102,13 @@
       (sc, close) => { DOS.qs("#cOk", sc).onclick = () => { close(); resolve(true); }; sc.addEventListener("click", (e) => { if (e.target.closest("[data-close]")) resolve(false); }); });
   });
   DOS.ripple = (e) => {
-    const b = e.target.closest(".btn"); if (!b) return;
+    const b = e.target.closest(".btn.primary,.btn.glow"); if (!b) return;   // only the main actions
     const r = b.getBoundingClientRect(), s = document.createElement("span"), d = Math.max(r.width, r.height);
     s.className = "ripple"; s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
     b.appendChild(s); setTimeout(() => s.remove(), 650);
   };
   DOS.confetti = (x = innerWidth / 2, y = innerHeight / 2, n = 36) => {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!DOS.CELEBRATE || matchMedia("(prefers-reduced-motion: reduce)").matches) return;   // off by default: calm, professional motion
     const colors = ["#FFA21A", "#3F86FF", "#34d399", "#a78bfa", "#f472b6", "#fbbf24"];
     for (let i = 0; i < n; i++) {
       const c = document.createElement("i"); c.className = "confetti";
@@ -117,9 +117,9 @@
       document.body.appendChild(c); setTimeout(() => c.remove(), 1200);
     }
   };
-  DOS.typewrite = async (el, text, speed = 9) => {
+  DOS.typewrite = async (el, text, speed = 4) => {
     el.classList.add("typing"); el.textContent = "";
-    const fast = matchMedia("(prefers-reduced-motion: reduce)").matches || text.length > 900;
+    const fast = matchMedia("(prefers-reduced-motion: reduce)").matches || text.length > 280;
     if (fast) { el.textContent = text; el.classList.remove("typing"); return; }
     for (let i = 0; i < text.length; i += 3) { el.textContent = text.slice(0, i + 3); await DOS.sleep(speed); }
     el.classList.remove("typing");

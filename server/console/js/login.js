@@ -11,7 +11,7 @@
     DOS.$("app").innerHTML = `
     <div class="login">
       <section class="login-l">
-        <div class="nodes">${Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 53) % 100}%;top:${(i * 37) % 100}%;animation-delay:${(i % 6) * .6}s;opacity:${.25 + (i % 4) * .15}"></i>`).join("")}</div>
+        <div class="nodes">${Array.from({ length: 12 }, (_, i) => `<i style="left:${(i * 53) % 100}%;top:${(i * 37) % 100}%;animation-delay:${(i % 6) * .6}s;opacity:${.25 + (i % 4) * .15}"></i>`).join("")}</div>
         <div class="brandrow rise">${DOS.logo(40)}<span>digiquench</span></div>
         <div class="rise" style="--i:1"><div class="eyebrow">DOS · DigiQuench OS · built on Gemini and Google Cloud</div>
           <h1 style="margin-top:12px">The AI agent platform<br><span class="grad">that runs your operations.</span></h1></div>
@@ -56,8 +56,8 @@
     L.people = r.people; L.demo = r.demo;
     DOS.$("people").innerHTML = L.people.map((p, i) => `
       <button type="button" class="rolecard rise" style="--i:${i}" data-i="${i}" aria-pressed="false">
-        ${p.code ? `<span class="code">${esc(p.code)}</span>` : ""}
-        <span class="rn">${esc(p.role_name)}${p.layers ? " · all layers" : ""}</span><b>${esc(p.name)}</b><small>${esc(p.sees)}</small></button>`).join("");
+        <span class="rn">${esc(p.role_name)}${p.layers ? " · all layers" : ""}</span><b>${esc(p.name)}</b><small>${esc(p.sees)}</small>
+        ${p.code ? `<span class="code">CODE ${esc(p.code)}</span>` : ""}</button>`).join("");
     DOS.qsa(".rolecard").forEach((b) => (b.onclick = () => pickPerson(+b.dataset.i)));
     DOS.$("hint").innerHTML = L.demo ? "Demo workspace: each card shows its login code. Click a card to fill it in." : "Your login code was shared with you by DigiQuench.";
   }

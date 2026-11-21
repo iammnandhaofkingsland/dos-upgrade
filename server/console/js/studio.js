@@ -139,7 +139,7 @@
         ${DOS.can("approval.decide") ? `<div class="row"><button class="btn good" data-ok="${esc(w.id)}">${icon("check")}Approve</button><button class="btn bad" data-no="${esc(w.id)}">${icon("x")}Reject</button><span class="small muted">You are deciding as ${esc(DOS.S.me.user.role_name)}.</span></div>`
           : `<p class="small muted" style="margin:0">An Approver decides this on the Approvals page.</p>`}</div>`).join("")}
       <div class="row" style="margin-top:10px"><button class="btn sm" onclick="DOS.go('runs/${esc(run.id)}')">${icon("pulse")}Open full trace</button></div>`;
-    await DOS.typewrite(DOS.$("ans"), run.output || run.error || (run.status === "waiting_approval" ? "The agent has prepared the action and is waiting for a person to approve it." : "No answer."));
+    await DOS.typewrite(DOS.$("ans"), run.output || (run.error ? `${run.error_hint || "The run failed."}\n\nDetail: ${run.error}` : "") || (run.status === "waiting_approval" ? "The agent has prepared the action and is waiting for a person to approve it." : "No answer."));
     if (run.status === "completed") { const r = box.getBoundingClientRect(); DOS.confetti(r.left + r.width / 2, r.top + 40); }
     DOS.qsa("[data-ok],[data-no]", box).forEach((b) => (b.onclick = () => decide(b.dataset.ok || b.dataset.no, !!b.dataset.ok, run, a)));
   }

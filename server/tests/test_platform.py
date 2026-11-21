@@ -191,7 +191,7 @@ def test_contact_hours_queue_instead_of_send(client):
 
 
 def test_refund_threshold_follows_client_config(client):
-    # Same agent, same request, two clients: Marigold allows instant refunds up to Rs 2,000, the sandbox up to Rs 1,500.
+    # Same agent, same request, two clients: Aurevia allows instant refunds up to Rs 2,000, the sandbox up to Rs 1,500.
     for cid, expect in (("demo", "waiting_approval"), ("marigold", "completed")):
         h = H(cid)
         go_live(client, "returnsbot", h)
@@ -244,7 +244,7 @@ def test_data_gate_readiness_upload_and_lineage(client):
     inv = {d["name"]: d for d in client.get("/api/data", headers=h).json()}
     assert inv["loans"]["status"] == "upload" and inv["loans"]["rows"] == 5 and "LoanProcess" in inv["loans"]["agents"]
     assert client.post("/api/agents/loanprocess/deployments", headers=h).json()["status"] == "live"
-    # QuickCred now reads ITS loans; Sri Balaji still reads the sample book.
+    # Lumora now reads ITS loans; Northvale still reads the sample book.
     with as_client("quickcred"):
         assert REGISTRY["get_loan_account"]("QC-2001")["customer"] == "Pooja Verma"
         assert REGISTRY["get_loan_account"]("LN-1002")["status"] == "error"
@@ -301,7 +301,7 @@ def test_four_eyes_rule(client):
     go_live(client, "loanprocess", owner)
     run = wait_run(client, client.post("/api/agents/loanprocess/runs", json={"input": "Follow up on loan LN-1002"}, headers=owner).json()["id"], headers=owner)
     ap = [a for a in client.get("/api/approvals", headers=owner).json() if a["run_id"] == run["id"]][0]
-    assert ap["tool"] == "send_message" and ap["why"] == "Added by this client"  # QuickCred approves every outbound message
+    assert ap["tool"] == "send_message" and ap["why"] == "Added by this client"  # Lumora approves every outbound message
     r = client.post(f"/api/approvals/{ap['id']}/decision", json={"approved": True}, headers=owner)
     assert r.status_code == 403 and "Four-eyes" in r.json()["detail"]
     assert client.post(f"/api/approvals/{ap['id']}/decision", json={"approved": True}, headers=approver).status_code == 200
@@ -367,7 +367,7 @@ def test_evidence_pack(client):
 def test_console_and_meta(client):
     assert "DigiQuench" in client.get("/").text
     m = client.get("/api/meta", headers=H("quickcred", "approver")).json()
-    assert m["client"]["name"] == "QuickCred Micro Loans" and m["role"] == "approver"
+    assert m["client"]["name"] == "Lumora Credit" and m["role"] == "approver"
     assert "approval.decide" in m["permissions"] and "config.edit" not in m["permissions"]
     assert len(client.get("/api/clients").json()) == 6
     assert [layer["layer"] for layer in client.get("/api/layers", headers=H("quickcred")).json()] == [1, 2, 3, 4, 5]
@@ -523,7 +523,7 @@ def test_fault_simulation_is_role_limited(client):
 
 
 def test_designated_approver_rule():
-    """Kaveri names the Quality Head as the only person who may hold a lot (segregation of duties)."""
+    """Axion names the Quality Head as the only person who may hold a lot (segregation of duties)."""
     from dq import auth
     from dq.clients import as_client
     with as_client("kaveri"):

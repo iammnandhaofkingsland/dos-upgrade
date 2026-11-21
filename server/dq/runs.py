@@ -146,6 +146,7 @@ class RunManager:
         except Exception as exc:  # a failed run must still be recorded, with its reason
             log.exception("run %s failed", run_id)
             error = f"{type(exc).__name__}: {exc}"[:500]
+            write_step(run_id, "guardrail", "run_error", detail=config.explain_error(error), status="error", by="platform")
             if prev_purpose == "run":
                 governance.raise_incident("run_failed", "medium", f"{spec.name} run failed: {error[:200]}", run_id, spec.id)
         finally:
@@ -156,6 +157,7 @@ class RunManager:
         status = "failed" if error else ("stopped" if stopped else ("waiting_approval" if pending else "completed"))
         store.update("runs", run_id, {
             "status": status, "output": final_text or prev.get("output", ""), "error": error,
+            "error_hint": config.explain_error(error) if error else None,
             "latency_ms": prev.get("latency_ms", 0) + round((time.perf_counter() - t0) * 1000),
             "ended_at": None if status == "waiting_approval" else now(),
             "input_tokens": sum(s.get("input_tokens", 0) for s in steps), "output_tokens": sum(s.get("output_tokens", 0) for s in steps),

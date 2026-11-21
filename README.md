@@ -15,16 +15,20 @@ One tight framework of five layers for running AI agents in a business. Built on
 ## Run it in two minutes (no key, no cost)
 ```
 make setup
-make test      # 42 offline tests (33 platform + 9 for the DOS app)
-make check STEP=all   # 31 plain-English PASS/FAIL checks (platform stages, then access, launcher, app, console)
+make test      # 46 offline tests (33 platform + 13 for the DOS app)
+make check STEP=all   # 34 plain-English PASS/FAIL checks (platform stages, then access, launcher, app, watch, console)
 make run       # http://localhost:8080 in simulation mode
 make seed      # in a second terminal: a day of activity for five clients, including the plant
 ```
 Open http://localhost:8080 and sign in: pick a company, pick a role, enter the six-digit login code (in demo mode each
 role card shows its code; Business Owner 260101, Operations Manager 260201, Approver 260301, Technician 260401, Auditor 260501).
-People are shown by role and job title only. As the Business Owner of DOS Sandbox: Agent Studio, Prepare all agents, then
+People are shown by role and job title only. As the Business Owner of Orionis Global Group: Agent Studio, Prepare all agents, then
 Run every agent (55 agents, 8 domains). Approvers decide what waits; only the Business Owner and Operations Manager see the
-five-layer pages. On Kaveri Precision Components, Plant floor, Simulate a fault, and watch six agents respond.
+five-layer pages. On Axion Precision Works, Plant floor, Simulate a fault, and watch six agents respond.
+Event watch shows every agent listening for its own events (a transaction alert, a KYC upload, a machine alarm, a supplier
+invoice, a schedule) with its queue; Deliver runs the agent on that event. Gold data (Business Owner and Operations Manager)
+shows the bronze, silver and gold view of the data each agent reads, with every personal value masked.
+Before a live demo: The five layers, Gemini connection, Check now (one tiny call per model).
 The old console is kept at /assets/classic.html.
 Simulation mode uses a scripted offline model. Client rules, the data gate, tool calls, limit checks, approvals,
 guardrails, both deployment gates and traces are the real platform code. The model text is scripted.

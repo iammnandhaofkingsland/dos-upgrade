@@ -20,6 +20,7 @@ LOANS = {
 TRANSACTIONS = {
     "TXN-9001": {"account": "ACC-7001", "amount": 1850, "merchant": "Grocery store", "device": "known", "city": "Chennai", "hour": 18},
     "TXN-9003": {"account": "ACC-7001", "amount": 84500, "merchant": "Electronics online", "device": "new", "city": "Kolkata", "hour": 2},
+    "TXN-9004": {"account": "ACC-7001", "amount": 12999, "merchant": "Travel booking", "device": "known", "city": "Chennai", "hour": 21},
 }
 ACCOUNT_TXNS = {
     "ACC-7001": [{"date": "2026-11-0%d" % d, "amount": a, "type": "card"} for d, a in [(1, 1200), (3, 2400), (5, 1850), (8, 84500)]],
@@ -29,7 +30,13 @@ RISK = {"ACC-7001": {"customer": "Anita Rao", "risk_band": "low", "avg_monthly_s
         "ACC-7002": {"customer": "Star Traders", "risk_band": "medium", "avg_monthly_spend": 60000, "home_city": "Pune", "prior_alerts": 1}}
 KYC_DOCS = {"APP-2001": {"pan": {"name": "SURESH BABU R", "dob": "1988-04-12", "number": "ABCPB1234K"},
                          "aadhaar": {"name": "SURESH BABU RAMAN", "dob": "1988-04-12", "number": "XXXX-XXXX-4321"},
-                         "address_proof": None}}
+                         "address_proof": None},
+            "APP-2002": {"pan": {"name": "MEERA KRISHNAN", "dob": "1993-09-30", "number": "BQRPK5521L"},
+                         "aadhaar": {"name": "MEERA KRISHNAN", "dob": "1993-09-30", "number": "XXXX-XXXX-7788"},
+                         "address_proof": {"type": "Utility bill", "name": "MEERA KRISHNAN", "date": "2026-10-28"}},
+            "APP-2003": {"pan": {"name": "DAVID JOSEPH", "dob": "1979-02-14", "number": "ABCD1234E"},
+                         "aadhaar": {"name": "DAVID JOSEPH", "dob": "1979-02-14", "number": "XXXX-XXXX-1290"},
+                         "address_proof": {"type": "Bank statement", "name": "DAVID JOSEPH", "date": "2026-08-02"}}}
 KNOWLEDGE = [
     {"doc": "Fair Practices Policy", "section": "4.2 Contact hours", "text": "Borrowers may be contacted only between {messaging.contact_start} and {messaging.contact_end}. No contact on declared holidays without consent."},
     {"doc": "Fair Practices Policy", "section": "4.5 Conduct", "text": "No threats, no abusive language, no contact with relatives or employers about the loan."},
@@ -62,7 +69,8 @@ PATIENTS = {"PT-5001": {"name": "Lakshmi N", "age": 54, "last_visit": "2026-11-0
 SLOTS = {"Dr Meera": {"Thursday": ["11:00", "16:30"], "Friday": ["10:30", "12:00"], "Saturday": ["09:30"]},
          "Dr Thomas": {"Thursday": ["10:00"], "Friday": ["15:00", "17:30"]}}
 CLAIMS = {"CLM-6001": {"patient": "PT-5001", "procedure": "Knee arthroscopy", "amount": 84000, "pre_auth_number": None, "documents": ["Discharge summary", "Bills"], "planned": True}}
-LABS = {"LAB-8001": {"patient": "PT-5001", "ordered_by": "Dr Thomas", "test": "HbA1c", "value": 8.1, "unit": "%", "reference_range": "4.0 - 5.6"}}
+LABS = {"LAB-8001": {"patient": "PT-5001", "ordered_by": "Dr Thomas", "test": "HbA1c", "value": 8.1, "unit": "%", "reference_range": "4.0 - 5.6"},
+        "LAB-8002": {"patient": "PT-5002", "ordered_by": "Dr Meera", "test": "Vitamin D", "value": 34, "unit": "ng/mL", "reference_range": "30 - 100"}}
 BRAND_VOICE = {"tone": "Warm, simple, confident. Short sentences.", "avoid": ["cheap", "best in the world", "guaranteed"], "emoji": "At most one", "sign_off": "Shop the edit today."}
 CAMPAIGNS = {"CMP-01": {"name": "Festive kurta", "spend_inr": 42000, "clicks": 5300, "orders": 212, "last_week": {"spend_inr": 40000, "clicks": 4100, "orders": 150},
                         "best_creative": "Flat-lay with diyas, headline about soft cotton", "best_times": {"instagram": "18:30", "linkedin": "09:00"}}}
@@ -110,7 +118,7 @@ DB = build_db()
 
 
 # =====================================================================================================
-# MANUFACTURING: a fictional automotive-components machining plant ("Kaveri Precision Components", Hosur).
+# MANUFACTURING: a fictional automotive-components machining plant ("Axion Precision Works", Hosur).
 # Makes steering and transmission parts (shafts, flanges, gear blanks) for vehicle makers, in two shifts.
 # Every machine, person, customer and number below is invented for the demo.
 # =====================================================================================================

@@ -60,7 +60,7 @@ def config_layer():
         ids = {c["id"] for c in list_clients()}
         assert {"demo", "sri-balaji", "quickcred", "marigold", "carepoint", "kaveri"} <= ids, ids
 
-    @check("policy() returns each company's own rule (spare-part limit at Kaveri is Rs 25,000)")
+    @check("policy() returns each company's own rule (spare-part limit at Axion is Rs 25,000)")
     def _():
         from dq.clients import as_client, policy, seed_clients
         seed_clients()
@@ -211,7 +211,7 @@ def server_layer():
             return
         assert TestClient(main.app).get("/api/meta").status_code == 401
 
-    @check("The sign-in page lists Kaveri's people for reviewers")
+    @check("The sign-in page lists Axion's people for reviewers")
     def _():
         from fastapi.testclient import TestClient
         import main
@@ -338,7 +338,7 @@ def console_layer():
     @check("The new app files are all in place and served")
     def _():
         c = _app_client()
-        files = ["css/dos.css"] + [f"js/{n}.js" for n in ("core", "ui", "login", "shell", "home", "studio", "runs", "approvals", "plant", "workorders", "layers", "governance", "ask")]
+        files = ["css/dos.css"] + [f"js/{n}.js" for n in ("core", "ui", "login", "shell", "home", "studio", "runs", "approvals", "plant", "workorders", "events", "gold", "layers", "governance", "ask")]
         missing = [f for f in files if c.get("/assets/" + f).status_code != 200]
         assert not missing, missing
         page = c.get("/").text
@@ -346,10 +346,44 @@ def console_layer():
         assert c.get("/assets/classic.html").status_code == 200, "keep the old console as classic.html"
 
 
+def watch_layer():
+    @check("A pasted Gemini key with a hidden line break is cleaned before any Gemini call")
+    def _():
+        import os, importlib
+        old = os.environ.get("GOOGLE_API_KEY")
+        os.environ["GOOGLE_API_KEY"] = "AIzaTEST_key-123\r\n"
+        from dq import config
+        importlib.reload(config)
+        assert os.environ["GOOGLE_API_KEY"] == "AIzaTEST_key-123", repr(os.environ["GOOGLE_API_KEY"])
+        if old is None:
+            os.environ.pop("GOOGLE_API_KEY")
+        else:
+            os.environ["GOOGLE_API_KEY"] = old
+        importlib.reload(config)
+
+    @check("Event watch shows what each agent waits for, with a queue of events (KYC: 3 applicants)")
+    def _():
+        c = _app_client(); h = _sign(c, "demo", "260101")
+        w = c.get("/api/app/events?vertical=Fintech", headers=h).json()
+        kyc = [a for a in w["agents"] if a["id"] == "kyc-autoflow"][0]
+        assert kyc["event"] == "KYC documents uploaded" and len(kyc["queue"]) == 3
+
+    @check("Gold-layer data: owner sees it with every personal value masked; the Approver is refused")
+    def _():
+        import json
+        c = _app_client(); h = _sign(c, "demo", "260101")
+        with c.stream("POST", "/api/app/launch/kyc-autoflow", headers=h, json={}) as r:
+            list(r.iter_lines())
+        g = c.get("/api/app/gold/kyc-autoflow", headers=h).json()
+        assert "SURESH" not in json.dumps(g) and g["datasets"][0]["masked_columns"]
+        assert c.get("/api/app/gold/kyc-autoflow", headers=_sign(c, "demo", "260301")).status_code == 403
+
+
 STAGES = {"foundation": [foundation], "config": [config_layer], "data": [data_layer], "tools": [tools_layer],
           "agents": [agents_layer], "safety": [safety_layer], "server": [server_layer], "plant": [plant_layer]}
 STAGES.update({"access": [access_layer], "launcher": [launcher_layer], "app": [app_layer], "console": [console_layer]})
-STAGES["upgrade"] = [access_layer, launcher_layer, app_layer, console_layer]
+STAGES["watch"] = [watch_layer]
+STAGES["upgrade"] = [access_layer, launcher_layer, app_layer, watch_layer, console_layer]
 STAGES["all"] = [f for k in ("foundation", "config", "data", "tools", "agents", "safety", "server", "plant") for f in STAGES[k]] + STAGES["upgrade"]
 
 if __name__ == "__main__":

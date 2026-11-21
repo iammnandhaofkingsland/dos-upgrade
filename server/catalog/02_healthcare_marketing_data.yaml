@@ -28,6 +28,9 @@
       expect: Asks intake questions one at a time and offers available slots.
   demo:
     ask: Hi, I need to see a doctor for knee pain this week.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "clinic-scheduling"}}
+      - {"tool": "find_slots", "args": {"doctor": "", "day": ""}}
 
 - id: docucare
   name: DocuCare
@@ -56,6 +59,10 @@
       expect: Produces four SOAP sections using only stated facts and saves a draft for sign-off.
   demo:
     ask: "Draft a SOAP note for PT-5001. Summary: knee pain for two weeks after a fall, no swelling, walking with mild limp, advised rest and X-ray."
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "clinical-safety"}}
+      - {"tool": "get_patient_summary", "args": {"patient_id": "PT-5001"}}
+      - {"tool": "save_draft", "args": {"kind": "soap_note", "title": "SOAP note PT-5001", "body": "S: Knee pain for two weeks after a fall. O: No swelling, walking with a mild limp. A: Soft-tissue knee injury, fracture not excluded. P: Rest, X-ray of the knee, review with the result. Draft for the doctor to sign."}}
 
 - id: claimssmart
   name: ClaimsSmart
@@ -83,6 +90,9 @@
       expect: Finds the missing pre-authorisation number and recommends fix first.
   demo:
     ask: Check claim CLM-6001 before we submit it.
+    script:
+      - {"tool": "check_claim", "args": {"claim_id": "CLM-6001"}}
+      - {"tool": "search_knowledge", "args": {"query": "claim documents required before submission"}}
 
 - id: apptiq
   name: ApptIQ
@@ -145,6 +155,11 @@
       expect: Flags the out-of-range value for the doctor and drafts a neutral ready-for-collection message.
   demo:
     ask: A result arrived for lab order LAB-8001. Handle it.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "clinical-safety"}}
+      - {"tool": "get_lab_result", "args": {"order_id": "LAB-8001"}}
+      - {"tool": "create_task", "args": {"title": "Doctor review: HbA1c 8.1% for PT-5001", "details": "HbA1c 8.1% is above the reference range (4.0 - 5.6). Please review and decide the follow-up.", "assignee": "Dr Thomas"}}
+      - {"tool": "send_message", "args": {"channel": "whatsapp", "to": "+91-90000-05001", "text": "Your lab result is ready. Dr Thomas's team will call you today to discuss it and the next steps."}}
 
 - id: carebot
   name: CareBot
@@ -172,6 +187,10 @@
       expect: Sends the check-in questions and schedules a nurse task if a warning sign is reported.
   demo:
     ask: Run the day-3 check-in for patient PT-5001.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "clinical-safety"}}
+      - {"tool": "get_patient_summary", "args": {"patient_id": "PT-5001"}}
+      - {"tool": "send_message", "args": {"channel": "whatsapp", "to": "+91-90000-05001", "text": "Hello, this is your day-3 check-in from the clinic. How is your knee today: better, the same, or worse? Reply here; if the pain is severe or you cannot walk, please call us."}}
 
 - id: contentgen
   name: ContentGen
@@ -233,6 +252,10 @@
       expect: Three variations each tied to a learning from past performance.
   demo:
     ask: Create three ad variations for campaign CMP-01.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "brand-voice"}}
+      - {"tool": "get_brand_voice", "args": {}}
+      - {"tool": "campaign_metrics", "args": {"campaign_id": "CMP-01"}}
 
 - id: socialsched
   name: SocialScheduler
@@ -260,6 +283,9 @@
       expect: A seven-day table with times justified by engagement data.
   demo:
     ask: Plan next week's posts for Instagram and LinkedIn.
+    script:
+      - {"tool": "campaign_metrics", "args": {"campaign_id": "CMP-01"}}
+      - {"tool": "schedule_post", "args": {"channel": "instagram", "text": "Handwoven, made to last. Explore this week's new arrivals.", "when": "Monday 11:00"}}
 
 - id: seopilot
   name: SEOScout
@@ -287,6 +313,9 @@
       expect: Keyword list with intent and one content brief.
   demo:
     ask: Plan content for the topic handloom sarees.
+    script:
+      - {"tool": "keyword_ideas", "args": {"topic": "handloom sarees"}}
+      - {"tool": "search_knowledge", "args": {"query": "handloom sarees"}}
 
 - id: campaignreport
   name: PerformReport
@@ -314,6 +343,9 @@
       expect: Report with spend, results, cost per result and week-on-week change.
   demo:
     ask: Write the weekly report for campaign CMP-01.
+    script:
+      - {"tool": "campaign_metrics", "args": {"campaign_id": "CMP-01"}}
+      - {"tool": "save_draft", "args": {"kind": "report", "title": "Weekly report CMP-01", "body": "Spend, clicks, orders and cost per order for CMP-01 are in this run's trace. Draft for the marketing head."}}
 
 - id: audienceiq
   name: AudienceIQ
@@ -341,6 +373,9 @@
       expect: Two segments with size, past response and a message angle.
   demo:
     ask: Which segments should we target for a premium product launch?
+    script:
+      - {"tool": "audience_segments", "args": {}}
+      - {"tool": "campaign_metrics", "args": {"campaign_id": "CMP-01"}}
 
 - id: dataingest
   name: DataIngest
@@ -368,6 +403,12 @@
       expect: Column mapping table with types and a list of problem rows.
   demo:
     ask: Plan the ingestion of dataset new_orders into the orders table.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "sql-safety"}}
+      - {"tool": "list_tables", "args": {}}
+      - {"tool": "describe_table", "args": {"table": "new_orders"}}
+      - {"tool": "profile_dataset", "args": {"table": "new_orders"}}
+      - {"tool": "save_draft", "args": {"kind": "ingestion_plan", "title": "Ingest new_orders into orders", "body": "Map new_orders columns to orders, reject rows that fail the profile checks, de-duplicate on order_id, load with an audit row count. Plan for the data owner to approve."}}
 
 - id: dataclean
   name: DataClean
@@ -395,6 +436,10 @@
       expect: Lists duplicate phone numbers and blank cities with a rule for each.
   demo:
     ask: Find and fix the quality problems in the customers dataset.
+    script:
+      - {"tool": "profile_dataset", "args": {"table": "customers"}}
+      - {"tool": "describe_table", "args": {"table": "customers"}}
+      - {"tool": "apply_cleaning_rule", "args": {"table": "customers", "rule": "Merge the duplicate customer records that share one phone number, keeping the most recent", "rows_affected": 1}}
 
 - id: datatransform
   name: DataTransform
@@ -422,6 +467,12 @@
       expect: A tested SELECT grouped by date and category with sample rows.
   demo:
     ask: Build a daily sales by category table from the orders data.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "sql-safety"}}
+      - {"tool": "list_tables", "args": {}}
+      - {"tool": "describe_table", "args": {"table": "orders"}}
+      - {"tool": "run_sql", "args": {"query": "SELECT order_date, category, ROUND(SUM(amount)) AS revenue, COUNT(*) AS orders FROM orders GROUP BY order_date, category ORDER BY order_date"}}
+      - {"tool": "save_draft", "args": {"kind": "table_design", "title": "daily_sales_by_category", "body": "Grain: one row per day and category. Columns: order_date, category, revenue, orders. Source: orders. Refresh: daily after the nightly load."}}
 
 - id: dataenrich
   name: DataEnrich
@@ -449,6 +500,10 @@
       expect: Returns Chennai, Tamil Nadu from reference data.
   demo:
     ask: Fill in the missing city and state for customers with PIN code 600042.
+    script:
+      - {"tool": "describe_table", "args": {"table": "customers"}}
+      - {"tool": "lookup_reference", "args": {"pincode": "600042"}}
+      - {"tool": "apply_cleaning_rule", "args": {"table": "customers", "rule": "Set city to Chennai and state to Tamil Nadu where pincode is 600042 and city is blank", "rows_affected": 1}}
 
 - id: dataanalyse
   name: DataAnalyse
@@ -476,6 +531,11 @@
       expect: Breaks revenue down by category and identifies the largest contributor to the drop.
   demo:
     ask: Why did revenue drop last week?
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "sql-safety"}}
+      - {"tool": "list_tables", "args": {}}
+      - {"tool": "run_sql", "args": {"query": "SELECT category, ROUND(SUM(amount)) AS revenue, COUNT(*) AS orders FROM orders GROUP BY category ORDER BY revenue DESC"}}
+      - {"tool": "profile_dataset", "args": {"table": "orders"}}
 
 - id: queryiq
   name: QueryIQ
@@ -537,6 +597,10 @@
       expect: Table of key figures with five lines of commentary saved as a draft.
   demo:
     ask: Create the weekly sales report.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "sql-safety"}}
+      - {"tool": "run_sql", "args": {"query": "SELECT category, ROUND(SUM(amount)) AS revenue, COUNT(*) AS orders FROM orders GROUP BY category ORDER BY revenue DESC"}}
+      - {"tool": "save_draft", "args": {"kind": "report", "title": "Weekly sales report", "body": "Revenue and orders by category from this run's query, with the top movers. Draft for the owner."}}
 
 - id: datagovern
   name: DataGovern
@@ -564,3 +628,8 @@
       expect: Flags name, phone and email with proposed sensitivity tags.
   demo:
     ask: Which columns in the customers table hold personal data?
+    script:
+      - {"tool": "list_tables", "args": {}}
+      - {"tool": "describe_table", "args": {"table": "customers"}}
+      - {"tool": "catalog_lookup", "args": {"term": "personal data"}}
+      - {"tool": "tag_column", "args": {"table": "customers", "column": "phone", "tag": "PII", "reason": "Phone numbers identify a person; mask by default and restrict to approved roles."}}

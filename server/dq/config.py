@@ -1,6 +1,15 @@
 """All runtime settings in one place. Every value comes from an environment variable so the same
 container runs on a laptop, in Cloud Run, and in tests without code changes."""
 import os
+import re
+
+# A key pasted into a terminal or Secret Manager on Windows can carry an invisible line break or space.
+# HTTP refuses such a header ("Forbidden control character detected in headers"), so every Gemini call
+# would fail. Clean the key once, here, before any Gemini client is created.
+for _k in ("GOOGLE_API_KEY", "GEMINI_API_KEY"):
+    if os.getenv(_k):
+        # Gemini keys use only letters, digits, "-" and "_": drop anything else (line breaks, spaces, quotes, a BOM).
+        os.environ[_k] = re.sub(r"[^A-Za-z0-9_\-]", "", os.environ[_k])
 
 # Model aliases used in the catalog -> real Gemini model IDs.
 # Change a model for all 38 agents by changing one environment variable, not 38 specs.
@@ -31,6 +40,46 @@ PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
 
 def resolve_model(alias: str) -> str:
     return MODEL_ALIASES.get(alias, alias)
+
+
+def _retry():
+    from google.genai import types  # noqa: PLC0415  (imported here so config stays importable without the SDK)
+    return types.HttpRetryOptions(attempts=int(os.getenv("DQ_GEMINI_ATTEMPTS", "4")), initial_delay=2, max_delay=20, exp_base=2,
+                                  http_status_codes=[408, 429, 500, 502, 503, 504])
+
+
+RETRY = _retry()
+
+
+def gemini_ready() -> tuple[bool, str]:
+    """Is live mode usable? Checked before a Gemini run so the app can say what is missing in plain words."""
+    if os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in ("1", "true"):
+        return (True, "Vertex AI") if PROJECT else (False, "GOOGLE_GENAI_USE_VERTEXAI is on but GOOGLE_CLOUD_PROJECT is not set.")
+    key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
+    if not key:
+        return False, "No Gemini API key. Put GOOGLE_API_KEY in server/.env (laptop) or the gemini-api-key secret (Cloud Run)."
+    if not key.startswith("AIza") or len(key) < 30:
+        return False, "The Gemini API key does not look right (AI Studio keys start with AIza and are 39 characters). Copy it again from AI Studio."
+    return True, "AI Studio key"
+
+
+def explain_error(err: str) -> str:
+    """Turn a raw Gemini/HTTP error into one plain sentence that says what to do."""
+    e = err or ""
+    rules = [
+        (("Forbidden control character", "header injection"), "The API key has a hidden line break. Paste it again without spaces; DOS now cleans it on start, so restart the server."),
+        (("API_KEY_INVALID", "API key not valid", "invalid api key"), "Google refused the API key. Create a new key in AI Studio and update the secret, then redeploy."),
+        (("PERMISSION_DENIED", "403"), "The key or project is not allowed to call this model. Check the key's project has the Gemini API enabled."),
+        (("NOT_FOUND", "404", "is not found", "not supported for generateContent"), "Gemini does not know this model ID. Set DQ_MODEL_FLASH / DQ_MODEL_LITE / DQ_MODEL_PRO to IDs shown in AI Studio."),
+        (("RESOURCE_EXHAUSTED", "429", "quota", "rate limit"), "Gemini rate limit or quota reached even after retries. Wait a minute, run one domain at a time, or enable billing on the key."),
+        (("UNAVAILABLE", "503", "overloaded", "DEADLINE", "timed out", "Timeout"), "Gemini was busy and did not answer in time even after retries. Run the agent again."),
+        (("INVALID_ARGUMENT", "400"), "Gemini rejected the request format. Check the model ID supports tools and thinking (use a Gemini 3.x Flash model)."),
+    ]
+    for words, hint in rules:
+        if any(w.lower() in e.lower() for w in words):
+            return hint
+    return "The run stopped with an unexpected error. Open the trace to see the last step, then run it again or in simulation."
+
 
 # ---------------------------------------------------------------- sign-in
 # token  = users sign in; every request carries a signed session token (default, use this when deployed)

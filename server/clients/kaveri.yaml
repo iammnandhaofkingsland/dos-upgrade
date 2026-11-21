@@ -1,8 +1,8 @@
 # A fictional automotive-components machining plant in Hosur, Tamil Nadu (the buildathon hero client).
 # Two shifts, eight machines, five maintenance technicians. Every name and number here is invented.
 id: kaveri
-name: Kaveri Precision Components
-industry: Automotive components machining (shafts, flanges, gear blanks), Hosur
+name: Axion Precision Works
+industry: Precision automotive components · global OEM supplier
 verticals: [Manufacturing, Wholesale, Data Automation]
 accent: "#F59E0B"
 contact: plant@kaveri.example

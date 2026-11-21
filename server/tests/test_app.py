@@ -113,3 +113,60 @@ def test_new_app_is_served_and_old_console_kept(client):
     assert "DOS.boot()" in client.get("/").text
     for f in ("css/dos.css", "js/core.js", "js/studio.js", "classic.html"):
         assert client.get("/assets/" + f).status_code == 200, f
+
+
+def test_gold_layer_is_masked_and_only_for_owner_and_ops_manager(client):
+    h, _ = sign_in(client, "demo", "260101")
+    events(client, "/api/app/launch/kyc-autoflow", h)                     # connects the KYC documents
+    g = client.get("/api/app/gold/kyc-autoflow", headers=h).json()
+    kyc = [d for d in g["datasets"] if d["name"] == "kyc_docs"][0]
+    flat = json.dumps(kyc["rows"])
+    assert "SURESH" not in flat and "ABCPB1234K" not in flat and "1988-04-12" not in flat   # personal values masked
+    assert kyc["masked_columns"] and kyc["medallion"]["gold"]["rows"] == 3
+    assert client.get("/api/app/gold", headers=h).status_code == 200
+    h3, _ = sign_in(client, "demo", "260301")
+    assert client.get("/api/app/gold/kyc-autoflow", headers=h3).status_code == 403
+
+
+def test_event_watch_lists_what_each_agent_waits_for(client):
+    h, _ = sign_in(client, "demo", "260101")
+    w = client.get("/api/app/events?vertical=Fintech", headers=h).json()
+    kyc = [a for a in w["agents"] if a["id"] == "kyc-autoflow"][0]
+    assert kyc["event"] == "KYC documents uploaded" and len(kyc["queue"]) == 3 and kyc["queue"][0]["sample"]
+    assert "SURESH" not in json.dumps(kyc)
+    # a new applicant runs the real look-ups in simulation and says plainly that deciding is Gemini's job
+    evs = events(client, "/api/app/launch/kyc-autoflow", h, {"input": kyc["queue"][2]["input"]})
+    run = [e for e in evs if e["type"] == "run"][0]["run"]
+    assert run["status"] == "completed" and "APP-2003" in run["output"] and "valid False" in run["output"]
+
+
+def test_simulated_replies_never_echo_personal_data(client):
+    h, _ = sign_in(client, "demo", "260101")
+    evs = events(client, "/api/app/launch/fin-support", h)
+    run = [e for e in evs if e["type"] == "run"][0]["run"]
+    assert run["status"] == "completed" and "90000-01001" not in run["output"]
+
+
+def test_downtime_stops_when_the_fault_is_cleared(client):
+    import time as _t
+    from dq import plant
+    from dq.context import client_var
+    h, _ = sign_in(client, "kaveri", "260101")
+    st = client.get("/api/plant/state", headers=h).json()
+    m = st["machines"][0]["machine_id"]
+    assert client.post("/api/plant/faults", headers=h, json={"machine": m, "fault": list(st["faults"])[0]}).status_code == 200
+    tok = client_var.set("kaveri")
+    pl, evs = plant.get_plant("kaveri"), []
+    for _ in range(200):
+        evs = [e for e in pl.tick(1) if e["machine"] == m]
+        if evs:
+            break
+    assert evs, "the simulated fault never reached its alarm limit"
+    plant.create_incident(evs[0], pl)
+    client_var.reset(tok)
+    assert client.get("/api/plant/state", headers=h).json()["kpis"]["open_incidents"] == 1
+    assert client.post(f"/api/plant/clear/{m}", headers=h).status_code == 200
+    a = client.get("/api/plant/state", headers=h).json()["kpis"]
+    _t.sleep(1.5)
+    b = client.get("/api/plant/state", headers=h).json()["kpis"]
+    assert a["downtime_cost_inr"] == b["downtime_cost_inr"] and b["open_incidents"] == 0

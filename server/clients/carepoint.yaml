@@ -1,7 +1,7 @@
 # A two-doctor clinic. English, evening contact allowed until 20:00, every patient message approved by staff.
 id: carepoint
-name: CarePoint Clinic
-industry: Multi-speciality clinic, Bengaluru
+name: Meridia Health Group
+industry: Multi-speciality healthcare network
 verticals: [Healthcare]
 accent: "#0E7490"
 contact: frontdesk@carepoint.example

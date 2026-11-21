@@ -1,7 +1,7 @@
 # The sandbox client. Every sample dataset is connected and the clock is fixed, so tests behave the same at any hour.
 id: demo
-name: DOS Sandbox
-industry: All industries (sandbox)
+name: Orionis Global Group
+industry: Multi-industry group · all eight domains (sandbox)
 verticals: [Fintech, Manufacturing, Wholesale, Retail, E-commerce, Healthcare, Digital Marketing, Data Automation]
 accent: "#1A73E8"
 contact: sandbox@example.com

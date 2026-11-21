@@ -15,6 +15,7 @@ from typing import AsyncGenerator
 from google.adk.models import BaseLlm, LlmRequest, LlmResponse
 from google.genai import types
 
+from .privacy import mask
 from .spec import AgentSpec
 
 
@@ -35,6 +36,43 @@ def _dig(obj, path):
         if obj is None:
             return None
     return obj
+
+
+def _fact(v) -> str:
+    if isinstance(v, (int, float)) and not isinstance(v, bool):
+        return f"{v:,.2f}".rstrip("0").rstrip(".") if isinstance(v, float) else f"{v:,}"
+    if isinstance(v, list):
+        first = v[0] if v and isinstance(v[0], dict) else None
+        lead = ", ".join(f"{k.replace('_', ' ')} {str(x)[:30]}" for k, x in list(first.items())[:2] if not isinstance(x, (dict, list))) if first else ""
+        return f"{len(v)} item{'s' if len(v) != 1 else ''}" + (f" (first: {lead})" if lead else "")
+    if isinstance(v, dict):
+        return f"{len(v)} field{'s' if len(v) != 1 else ''}"
+    return str(v)[:80]
+
+
+def _acts(tool: str) -> bool:
+    from .data import tool_lineage  # noqa: PLC0415  (lazy: avoids an import cycle with the tools package)
+    return tool_lineage(tool)["acts"]
+
+
+def compose_reply(spec: AgentSpec, responses) -> str:
+    """The simulated model's closing answer: what each real tool returned, in one line per tool.
+    Built from the actual tool results of this run, so it never claims more than the trace shows."""
+    lines = []
+    for r in responses:
+        if r.name in ("load_skill", "list_skills"):
+            continue
+        res = mask(r.response if isinstance(r.response, dict) else {"result": r.response})  # never echo personal data
+        if res.get("status") == "error":
+            lines.append(f"- {r.name.replace('_', ' ')}: refused or failed ({str(res.get('error_message', ''))[:120]})")
+            continue
+        if res.get("summary"):
+            lines.append(f"- {r.name.replace('_', ' ')}: {str(res['summary'])[:220]}")
+            continue
+        facts = [f"{k.replace('_', ' ')} {_fact(v)}" for k, v in res.items() if k not in ("status",) and v not in (None, "", [], {})][:5]
+        lines.append(f"- {r.name.replace('_', ' ')}: " + ("; ".join(facts) if facts else "done"))
+    head = f"[Simulation] {spec.name} handled the request with its real tools on this company's sample data."
+    return head + ("\n" + "\n".join(lines) if lines else "") + "\nThe full detail of every step is in the trace."
 
 
 def fill_slots(args, user_text: str, results: list[dict]):
@@ -89,7 +127,7 @@ class MockGemini(BaseLlm):
                    if p.function_response and p.function_response.name != "adk_request_confirmation")
         rejected = any("reject" in str(p.function_response.response).lower() for c in contents[last_user:] for p in (c.parts or [])
                        if p.function_response and p.function_response.name in self.spec.approvals)
-        script = self.spec.demo.script
+        script = list(self.spec.demo.script)
         responses = [p.function_response for c in contents[last_user:] for p in (c.parts or [])
                      if p.function_response and p.function_response.name != "adk_request_confirmation"]
         last = (responses[-1].response or {}) if responses else {}
@@ -101,6 +139,8 @@ class MockGemini(BaseLlm):
         ask_ids, msg_ids = ID.findall(self.spec.demo.ask), ID.findall(user_text)
         other = msg_ids[0] if msg_ids and ask_ids and msg_ids[0] not in ask_ids and not self.spec.demo.generic else None
         results = [r.response for r in responses if isinstance(r.response, dict)]
+        if other:  # a record other than the sample: do the look-ups for real, leave actions to Gemini in live mode
+            script = [st for st in script if st.tool not in self.spec.approvals and not _acts(st.tool)]
         chars = sum(len(p.text or "") for c in contents for p in (c.parts or [])) + len(str(llm_request.config.system_instruction or ""))
         if rejected:
             part = types.Part(text="[Simulation] The approver rejected the action, so I have not carried it out. Everything else I did is listed in the trace.")
@@ -109,16 +149,16 @@ class MockGemini(BaseLlm):
             part = types.Part(text="[Simulation] The platform refused that step: " + str(last.get("error_message", "not allowed")) +
                               " I have stopped there and done nothing further.")
             out_tokens = 40
-        elif other and done >= 1:
-            part = types.Part(text=f"[Simulation] I looked up {other}; the trace shows what the platform returned. The scripted model only plays the full "
-                                   "conversation for the sample request. Switch to live mode to see Gemini handle this record end to end.")
-            out_tokens = 45
+        elif other and done >= len(script):
+            text = compose_reply(self.spec, responses) + (f"\nThis was a new record ({other}), so the simulation did the look-ups only. "
+                                                          "Deciding and acting on it is Gemini's job in live mode.")
+            part = types.Part(text=text)
+            out_tokens = max(20, len(text) // 4)
         elif done < len(script):
             step = script[done]
-            if self.spec.demo.generic:
-                args = fill_slots(step.args, user_text, results)
-            else:
-                args = json.loads(json.dumps(step.args).replace(ask_ids[0], other)) if other else step.args
+            args = json.loads(json.dumps(step.args).replace(ask_ids[0], other)) if other else step.args
+            if self.spec.demo.generic or "{" in json.dumps(args):
+                args = fill_slots(args, user_text, results)
             part = types.Part(function_call=types.FunctionCall(name=step.tool, args=args))
             out_tokens = 40
         elif self.spec.demo.generic:
@@ -129,8 +169,7 @@ class MockGemini(BaseLlm):
             part = types.Part(text=text)
             out_tokens = max(20, len(text) // 4)
         else:
-            text = self.spec.demo.reply or (f"[Simulation] {self.spec.name} would now use its tools ({', '.join(self.spec.tools[:3])}) "
-                                            f"to handle: \"{self.spec.demo.ask}\". Switch to live mode to see Gemini do it.")
+            text = self.spec.demo.reply or compose_reply(self.spec, responses)
             if scheduled:
                 text += f" Note: it is outside the client's contact window, so the message is scheduled for {scheduled}, not sent yet."
             part = types.Part(text=text)

@@ -31,6 +31,12 @@
       expect: Recommends HOLD and cites new device plus amount far above the customer's normal spend.
   demo:
     ask: Review transaction TXN-9003 and tell me what to do.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "aml-typologies"}}
+      - {"tool": "get_transaction", "args": {"txn_id": "TXN-9003"}}
+      - {"tool": "get_customer_risk_profile", "args": {"account_id": "ACC-7001"}}
+      - {"tool": "list_account_transactions", "args": {"account_id": "ACC-7001"}}
+      - {"tool": "hold_transaction", "args": {"txn_id": "TXN-9003", "reason": "Rs 84,500 at 2 am on a new device in Kolkata, far outside this customer's normal pattern"}}
 
 - id: kyc-autoflow
   name: KYC AutoFlow
@@ -60,6 +66,11 @@
       expect: Checklist shows a PAN format pass, a name mismatch between documents, and address proof missing.
   demo:
     ask: Run KYC for applicant APP-2001.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "kyc-checklist"}}
+      - {"tool": "extract_kyc_fields", "args": {"applicant_id": "APP-2001"}}
+      - {"tool": "verify_id_format", "args": {"id_type": "pan", "value": "{r:documents.pan.number}"}}
+      - {"tool": "save_draft", "args": {"kind": "kyc_review", "title": "KYC review APP-2001", "body": "PAN format valid. The name on PAN and on Aadhaar differ only by the expanded surname; the dates of birth match. Address proof is missing. Recommendation: hold as pending and request an address proof before approval."}}
 
 - id: aml-monitor
   name: AML Monitor
@@ -89,6 +100,11 @@
       expect: Identifies repeated cash deposits just under the reporting threshold and drafts a narrative.
   demo:
     ask: Investigate account ACC-7002 for possible structuring.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "aml-typologies"}}
+      - {"tool": "list_account_transactions", "args": {"account_id": "ACC-7002"}}
+      - {"tool": "get_customer_risk_profile", "args": {"account_id": "ACC-7002"}}
+      - {"tool": "save_draft", "args": {"kind": "str_draft", "title": "Draft suspicious transaction report: ACC-7002", "body": "Pattern review of ACC-7002: repeated cash deposits just under the reporting threshold within a short window (possible structuring). Draft for the compliance officer to review before any filing."}}
 
 - id: loanprocess
   name: LoanProcess
@@ -157,6 +173,9 @@
       expect: States the client's permitted contact window and cites the fair practices policy.
   demo:
     ask: What is our policy on contacting borrowers after 7 pm?
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "escalation-rules"}}
+      - {"tool": "search_knowledge", "args": {"query": "contacting borrowers after 7 pm"}}
 
 - id: fin-support
   name: Customer Support Agent
@@ -184,6 +203,9 @@
       expect: Gives the next due date and EMI amount for LN-1001.
   demo:
     ask: My loan is LN-1001. When is my next EMI due and how much?
+    script:
+      - {"tool": "get_loan_account", "args": {"loan_id": "LN-1001"}}
+      - {"tool": "search_knowledge", "args": {"query": "EMI due date and payment options"}}
 
 - id: inventoryiq
   name: InventoryIQ
@@ -246,6 +268,10 @@
       expect: Gives a 30-day number with a range and names the festival uplift assumption.
   demo:
     ask: Forecast demand for SKU-110 for the next 30 days.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "reorder-policy"}}
+      - {"tool": "sales_summary", "args": {"period": "last_week"}}
+      - {"tool": "forecast_demand", "args": {"sku": "SKU-110", "days": 30}}
 
 - id: pricesync
   name: PriceSync
@@ -273,6 +299,10 @@
       expect: Recommends a small reduction that keeps margin above the floor.
   demo:
     ask: Should we change the price of SKU-204?
+    script:
+      - {"tool": "get_stock_levels", "args": {"category": "all"}}
+      - {"tool": "competitor_prices", "args": {"sku": "SKU-204"}}
+      - {"tool": "update_price", "args": {"sku": "SKU-204", "new_price": 629}}
 
 - id: supplierlink
   name: SupplierLink
@@ -300,6 +330,9 @@
       expect: Compares three quotes and recommends the cheapest supplier that meets lead time.
   demo:
     ask: Get me the best quote for SKU-110.
+    script:
+      - {"tool": "get_supplier_quotes", "args": {"sku": "SKU-110"}}
+      - {"tool": "create_task", "args": {"title": "Raise a purchase order for SKU-110 with the best quote", "details": "Compare price, lead time and on-time record from the quotes in this run; confirm the quantity with the store manager.", "assignee": "purchase"}}
 
 - id: retailanalytics
   name: RetailAnalytics
@@ -327,6 +360,10 @@
       expect: Names Grocery with its drop of about 69 percent and suggests one action.
   demo:
     ask: Which category changed most last week and what should I do about it?
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "sql-safety"}}
+      - {"tool": "sales_summary", "args": {"period": "last_week"}}
+      - {"tool": "run_sql", "args": {"query": "SELECT category, ROUND(SUM(amount)) AS revenue, COUNT(*) AS orders FROM orders GROUP BY category ORDER BY revenue DESC"}}
 
 - id: catalogueai
   name: CatalogueAI
@@ -355,6 +392,10 @@
       expect: Proposes a title, five bullets and a description using only recorded attributes.
   demo:
     ask: Improve the listing for SKU-501.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "brand-voice"}}
+      - {"tool": "get_product", "args": {"sku": "SKU-501"}}
+      - {"tool": "update_product_listing", "args": {"sku": "SKU-501", "title": "Yellow Cotton Kurta, Regular Fit, Three-Quarter Sleeves", "bullets": ["100% breathable cotton for all-day comfort", "Regular fit with three-quarter sleeves", "Machine wash cold, colour stays bright"], "description": "A sunny yellow kurta in soft 100% cotton. Regular fit, three-quarter sleeves, and easy machine-wash care. Wear it to work or to a festive lunch."}}
 
 - id: reviewmine
   name: ReviewMine
@@ -413,6 +454,10 @@
       expect: Reports the gap and recommends hold or match with the margin impact.
   demo:
     ask: Check competitor prices for SKU-501.
+    script:
+      - {"tool": "competitor_prices", "args": {"sku": "SKU-501"}}
+      - {"tool": "get_product", "args": {"sku": "SKU-501"}}
+      - {"tool": "update_price", "args": {"sku": "SKU-501", "new_price": 1849}}
 
 - id: returnsbot
   name: ReturnsBot
@@ -474,6 +519,9 @@
       expect: Returns up to three in-stock items with a reason linked to past purchases.
   demo:
     ask: Recommend products for customer CUS-4001.
+    script:
+      - {"tool": "get_customer_history", "args": {"customer_id": "CUS-4001"}}
+      - {"tool": "recommend_products", "args": {"customer_id": "CUS-4001"}}
 
 - id: emailflow
   name: EmailFlow
@@ -501,3 +549,8 @@
       expect: Chooses the lapsed segment and drafts a subject, body and call to action for approval.
   demo:
     ask: Create a win-back email for customers who have not ordered in 60 days.
+    script:
+      - {"tool": "load_skill", "args": {"skill_name": "brand-voice"}}
+      - {"tool": "audience_segments", "args": {}}
+      - {"tool": "get_brand_voice", "args": {}}
+      - {"tool": "schedule_email", "args": {"segment": "Lapsed 60 days", "subject": "We saved something for you", "body": "It has been a while. Your favourites are back in stock, and here is 10% off your next order this week. Reply STOP to opt out.", "send_at": "Tuesday 10:00"}}

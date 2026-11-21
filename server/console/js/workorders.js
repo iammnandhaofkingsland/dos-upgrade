@@ -47,14 +47,15 @@
 
   function card(w, i, canAct) {
     const at = FLOW.indexOf(w.status), nx = NEXT[w.status];
-    return `<div class="card rise" style="--i:${i};${w.escalated ? "border-color:rgba(248,113,113,.5)" : ""}">
+    return `<div class="card rise" style="--i:${i};${w.status === "cancelled" ? "opacity:.6;" : ""}${w.escalated ? "border-color:rgba(248,113,113,.5)" : ""}">
       <div class="row"><span class="ico" style="--ic:${w.priority === "high" ? "var(--bad)" : "var(--accent)"}">${icon("wrench")}</span><div class="grow"><b style="font-size:15px">${esc(w.machine_name)}</b><div class="small muted">${esc(w.id)} · ${esc(w.priority)} priority · ${DOS.ago(w.assigned_at)}</div></div>${DOS.status(w.status)}</div>
       <p style="margin:10px 0 6px"><b>${esc(w.title)}</b></p><p class="small" style="color:var(--text2);margin:0 0 10px;white-space:pre-wrap">${esc((w.diagnosis || "").slice(0, 420))}</p>
       <div class="args" style="margin-bottom:12px"><div><span>Technician</span><b>${esc(w.technician_name || "Not assigned")}</b></div><div><span>Spare part</span><b>${esc(w.part || "None needed")}</b></div>
         ${w.resolution ? `<div><span>Confirmed cause</span><b>${esc(DOS.title(w.resolution.confirmed_cause || ""))}</b></div><div><span>Repair time</span><b>${num(w.resolution.minutes)} min</b></div>` : ""}</div>
       <div class="stepper">${FLOW.map((s, k) => `${k ? `<i class="${k <= at ? "on" : ""}"></i>` : ""}<b class="${k <= at ? "on" : ""}" title="${DOS.title(s)}">${k < at || s === "resolved" && at === 3 ? "✓" : k + 1}</b>`).join("")}</div>
       <div class="row small muted" style="justify-content:space-between;margin-top:4px">${FLOW.map((s) => `<span>${DOS.title(s)}</span>`).join("")}</div>
-      ${w.escalated ? `<p class="small" style="color:#fca5a5;margin:10px 0 0">${icon("alert")} Escalated: not acknowledged in time.</p>` : ""}
+      ${w.status === "cancelled" ? `<p class="small muted" style="margin:10px 0 0">${icon("x")} Cancelled: ${esc(w.cancel_reason || "the fault was cleared before the repair started")}.</p>` : ""}
+      ${w.escalated && w.status !== "cancelled" ? `<p class="small" style="color:#fca5a5;margin:10px 0 0">${icon("alert")} Escalated: not acknowledged in time.</p>` : ""}
       ${canAct && nx ? `<div class="row" style="margin-top:12px"><button class="btn ${nx[0] === "resolve" ? "good" : "primary"}" data-id="${esc(w.id)}" data-act="${nx[0]}">${icon(nx[2])}${nx[1]}</button></div>` : ""}</div>`;
   }
 })();

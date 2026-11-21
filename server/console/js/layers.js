@@ -17,10 +17,22 @@
           <div><h3>${esc(l.name)}</h3><div class="what">${esc(l.what)}</div><ul>${l.facts.map((f) => `<li>${esc(f)}</li>`).join("")}</ul></div>
           <div style="text-align:right"><span class="chip dot ${l.status === "ok" ? "ok" : l.status === "stop" ? "bad" : "warn"}">${l.status === "ok" ? "Healthy" : l.status === "stop" ? "Stopped" : "Check"}</span>
             <div class="small muted" style="margin-top:8px">${num(l.trace_steps)} trace steps in 24 h</div></div></div>`).join("")}</div>
+        <div class="card rise" id="gemCard"><div class="row"><span class="ico" style="--ic:var(--brand)">${icon("model")}</span><div class="grow"><b>Gemini connection</b>
+          <div class="small muted">One tiny call to each model DOS uses, to prove live mode works before a demo. Mode now: ${esc(L.mode === "live" ? "Gemini (live)" : "Simulation")}.</div></div>
+          <button class="btn sm" id="gemGo">${icon("refresh")}Check now</button></div><div id="gemOut"></div></div>
         <h2>Follow one run through the layers</h2>
         <div class="card rise"><div class="row"><select class="in" id="pick" style="max-width:420px">${runs.length ? runs.map((r) => `<option value="${esc(r.id)}">${esc(r.agent_name)} · ${esc(DOS.title(r.status))} · ${DOS.ago(r.created_at)}</option>`).join("") : `<option value="">No runs yet: launch an agent first</option>`}</select>
           <span class="small muted">Every step of the run, grouped by the layer that took it.</span></div><div id="follow" style="margin-top:14px"></div></div>`;
       DOS.qsa(".lay").forEach((d) => (d.onclick = () => DOS.go(d.dataset.p)));
+      DOS.$("gemGo").onclick = async () => {
+        const b = DOS.$("gemGo"); b.disabled = true; b.innerHTML = `<span class="spinner"></span>Checking`;
+        try { const g = await DOS.api("/api/app/gemini-check?fresh=true");
+          DOS.$("gemOut").innerHTML = !g.models.length ? `<p class="small" style="color:var(--bad);margin:10px 0 0">${icon("alert")} ${esc(g.reason)}</p>`
+            : `<div class="grid g3" style="margin-top:12px">${g.models.map((m) => `<div class="mb ${m.ok ? "gold" : ""}" style="${m.ok ? "" : "border-color:rgba(248,113,113,.5)"}"><span>${esc(m.alias)}</span><b style="font-size:14px">${esc(m.model)}</b>
+              <small>${m.ok ? `Answered in ${num(m.ms)} ms` : esc(m.hint)}</small>${m.ok ? "" : `<small class="muted">${esc(m.error)}</small>`}</div>`).join("")}</div>`;
+        } catch (e) { DOS.toast(e.message, "bad"); }
+        b.disabled = false; b.innerHTML = `${icon("refresh")}Check again`;
+      };
       const follow = async () => {
         const id = DOS.$("pick").value; if (!id) return;
         const r = await DOS.api(`/api/runs/${encodeURIComponent(id)}`);
