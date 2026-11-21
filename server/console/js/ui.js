@@ -6,7 +6,7 @@
   /* ---------- icons (simple line icons, 24x24) ---------- */
   const P = {
     home: "M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z", bot: "M12 3v3M7 8h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3zM9 13h.01M15 13h.01M9 17h6",
-    pulse: "M3 12h4l3-8 4 16 3-8h4", check: "M20 6L9 17l-5-5", factory: "M3 21V10l6 4V10l6 4V6l6 4v11zM7 17h2M12 17h2M17 17h2",
+    pulse: "M3 12h4l3-8 4 16 3-8h4", coin: "M12 3a9 9 0 1 0 .01 0zM9 8h6M9 11h6M10.5 8c2.8 0 2.8 6 0 6H9l4.5 3.5", check: "M20 6L9 17l-5-5", factory: "M3 21V10l6 4V10l6 4V6l6 4v11zM7 17h2M12 17h2M17 17h2",
     wrench: "M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z", radio: "M5 12a7 7 0 0 1 14 0M8.5 12a3.5 3.5 0 0 1 7 0M12 12v.01M2 12a10 10 0 0 1 20 0",
     doc: "M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6", shield: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z", layers: "M12 3l9 5-9 5-9-5zM3 13l9 5 9-5M3 17l9 5 9-5",
     sliders: "M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4", db: "M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3",
@@ -39,6 +39,12 @@
     running_m: ["ok", "Running"], warning: ["warn", "Warning"], alarm: ["bad", "Alarm"], maintenance: ["info", "Under repair"], repairing: ["info", "Repairing"],
     High: ["bad", "High risk"], Medium: ["warn", "Medium risk"], Low: ["ok", "Low risk"], open: ["bad", "Open"], closed: ["ok", "Closed"] };
   DOS.status = (s) => { const [c, t] = STATUS[s] || ["", DOS.title(s)]; return `<span class="chip dot ${c}">${esc(t)}</span>`; };
+  DOS.argText = (v) => {
+    if (v == null) return "–";
+    if (Array.isArray(v)) return v.map((x) => (typeof x === "object" ? DOS.argText(x) : x)).join(", ");
+    if (typeof v === "object") return Object.entries(v).slice(0, 4).map(([k, x]) => `${DOS.title(k)}: ${typeof x === "object" ? "…" : x}`).join(" · ");
+    return String(v);
+  };
   DOS.simChip = (sim) => (sim ? `<span class="chip warn" title="Scripted model with real tools and rules">Simulated</span>` : `<span class="chip violet" title="Answered by Gemini">Gemini</span>`);
   DOS.DOMAIN = { Fintech: ["bank", "#3F86FF"], Manufacturing: ["factory", "#FFA21A"], Wholesale: ["truck", "#a78bfa"], Retail: ["store", "#34d399"],
     "E-commerce": ["cart", "#f472b6"], Healthcare: ["heart", "#f87171"], "Digital Marketing": ["megaphone", "#fbbf24"], "Data Automation": ["database", "#22d3ee"] };

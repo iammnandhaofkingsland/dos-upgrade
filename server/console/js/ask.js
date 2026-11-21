@@ -32,8 +32,7 @@
     try {
       const r = await DOS.api("/api/app/ask", { method: "POST", body: { question: q } });
       box.innerHTML = r.blocked ? `<span class="chip bad">Refused by the safety screen</span><br>` : "";
-      const t = document.createElement("span"); box.appendChild(t);
-      await DOS.typewrite(t, r.answer, 7);
+      const t = document.createElement("div"); t.className = "rich rise"; t.innerHTML = DOS.rich(r.answer); box.appendChild(t);
       box.insertAdjacentHTML("beforeend", `<div class="tools">${r.engine === "gemini" ? "Answered by Gemini" : r.engine === "rules" ? "Answered from records (simulation)" : "Safety screen"}${r.looked_up.length ? " · looked at " + r.looked_up.join(", ") : ""}</div>`);
     } catch (e) { box.textContent = e.message; }
     chat.scrollTop = 1e9;

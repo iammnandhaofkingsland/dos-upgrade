@@ -338,7 +338,7 @@ def console_layer():
     @check("The new app files are all in place and served")
     def _():
         c = _app_client()
-        files = ["css/dos.css"] + [f"js/{n}.js" for n in ("core", "ui", "login", "shell", "home", "studio", "runs", "approvals", "plant", "workorders", "events", "gold", "layers", "governance", "ask")]
+        files = ["css/dos.css"] + [f"js/{n}.js" for n in ("core", "ui", "result", "login", "shell", "home", "studio", "runs", "approvals", "plant", "workorders", "events", "gold", "layers", "governance", "ask")]
         missing = [f for f in files if c.get("/assets/" + f).status_code != 200]
         assert not missing, missing
         page = c.get("/").text
@@ -346,8 +346,20 @@ def console_layer():
         assert c.get("/assets/classic.html").status_code == 200, "keep the old console as classic.html"
 
 
+    @check("Agent outcomes show as a designed card, and trace steps never show raw personal data")
+    def _():
+        c = _app_client()
+        js = c.get("/assets/js/result.js").text
+        assert "DOS.result" in js and "DOS.animateResult" in js, "result.js is the old version"
+        assert "res-metrics" in c.get("/assets/css/dos.css").text, "dos.css is missing the outcome card styles"
+        assert "result.js?v=6" in c.get("/").text, "index.html still loads the old ?v=5 files (browser cache)"
+        from dq.trace import preview
+        out = preview({"name": "DAVID JOSEPH", "dob": "1979-02-14", "phone": "9876543210", "applicant_id": "APP-2003"})
+        assert "DAVID JOSEPH" not in out and "1979-02-14" not in out and "9876543210" not in out and "APP-2003" in out
+
+
 def watch_layer():
-    @check("A pasted Gemini key with a hidden line break is cleaned before any Gemini call")
+    @check("A pasted Gemini key (AIza or new AQ. format) is cleaned of hidden line breaks before any Gemini call")
     def _():
         import os, importlib
         old = os.environ.get("GOOGLE_API_KEY")
@@ -355,6 +367,10 @@ def watch_layer():
         from dq import config
         importlib.reload(config)
         assert os.environ["GOOGLE_API_KEY"] == "AIzaTEST_key-123", repr(os.environ["GOOGLE_API_KEY"])
+        os.environ["GOOGLE_API_KEY"] = " AQ.Ab8RN6Ltest-key_with.dots\r\n"   # new AI Studio auth-key format keeps its dots
+        importlib.reload(config)
+        assert os.environ["GOOGLE_API_KEY"] == "AQ.Ab8RN6Ltest-key_with.dots", repr(os.environ["GOOGLE_API_KEY"])
+        assert config.gemini_ready()[0], config.gemini_ready()
         if old is None:
             os.environ.pop("GOOGLE_API_KEY")
         else:

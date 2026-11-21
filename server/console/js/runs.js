@@ -42,12 +42,13 @@
           ${DOS.tile("Data reads", byLayer[1], "layer 3, every read logged", "db", "var(--l3)", 4)}${DOS.tile("Safety checks", byLayer[3], "layer 5 guardrails and approvals", "shield", "var(--l5)", 5)}</div>
         <div class="split"><div class="card rise"><h3>Every step, in order</h3><p class="small muted" style="margin:4px 0 12px">Each line is tagged with the layer that produced it.</p><div class="trace" style="max-height:none">${r.steps.map((s, i) => DOS.stepRow(s, i)).join("")}</div></div>
           <div class="grid"><div class="card rise" style="--i:1"><h3>Request</h3><pre style="margin-top:8px">${esc(r.input)}</pre></div>
-            <div class="card rise" style="--i:2"><h3>Answer</h3><div class="answer ${r.status === "completed" ? "" : r.status === "waiting_approval" ? "wait" : "bad"}" style="margin-top:8px">${esc(r.output || r.error || "No answer yet.")}</div></div>
+            <div class="rise" style="--i:2" id="runRes">${DOS.result(r, { metrics: false })}</div>
             ${r.approvals.length ? `<div class="card rise" style="--i:3"><h3>Decisions</h3><div class="list" style="margin-top:8px">${r.approvals.map((a) => `<div class="item">${DOS.status(a.status)}<div class="grow"><b>${esc(DOS.title(a.tool))}</b><div class="small muted">${esc(a.decided_by ? "by " + a.decided_by : a.why || "")}</div></div>
               ${a.status === "pending" && DOS.can("approval.decide") ? `<button class="btn sm good" data-ok="${esc(a.id)}">Approve</button><button class="btn sm bad" data-no="${esc(a.id)}">Reject</button>` : ""}</div>`).join("")}</div></div>` : ""}
-            ${r.actions.length ? `<div class="card rise" style="--i:4"><h3>What the agent did</h3><div class="list" style="margin-top:8px">${r.actions.map((a) => `<div class="item"><span class="ico" style="--ic:var(--ok)">${icon("bolt")}</span><div class="grow"><b>${esc(DOS.title(a.kind || a.tool || "action"))}</b><div class="small muted">${esc(a.summary || JSON.stringify(a.payload || a.args || {}).slice(0, 160))}</div></div></div>`).join("")}</div></div>` : ""}
+            ${r.actions.length ? `<div class="card rise" style="--i:4"><h3>What the agent did</h3><div class="list" style="margin-top:8px">${r.actions.map((a) => `<div class="item"><span class="ico" style="--ic:var(--ok)">${icon("bolt")}</span><div class="grow"><b>${esc(DOS.title(a.kind || a.tool || "action"))}</b><div class="small muted">${esc(a.summary || DOS.argText(a.payload || a.args || {}).slice(0, 160))}</div></div></div>`).join("")}</div></div>` : ""}
           </div></div>`;
       DOS.countUp(el);
+      DOS.animateResult(DOS.$("runRes"));
       DOS.qsa("[data-ok],[data-no]", el).forEach((b) => (b.onclick = async () => {
         try { await DOS.api(`/api/approvals/${encodeURIComponent(b.dataset.ok || b.dataset.no)}/decision`, { method: "POST", body: { approved: !!b.dataset.ok, note: "Decided on the run page" } });
           DOS.toast("Decision recorded. The agent continues.", "ok"); DOS.refreshMe(); } catch (e) { DOS.toast(e.message, "bad"); }

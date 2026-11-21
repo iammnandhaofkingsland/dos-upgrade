@@ -109,9 +109,9 @@
     DOS.qs(".ewstate", c).className = `chip ${idle(a) ? "warn" : "ok"} dot ewstate`; DOS.qs(".ewstate", c).textContent = idle(a) ? "Waiting for an event" : "Listening";
     DOS.qsa("[data-deliver]", c).forEach((b) => (b.disabled = false));
     if (final) {
-      const out = final.status === "failed" ? (final.error_hint || final.error || "Failed") : (final.output || (final.status === "waiting_approval" ? "Prepared the action; waiting for a person to approve it." : ""));
-      DOS.qs(".ewlast", c).innerHTML = `${DOS.status(final.status)}${DOS.simChip(final.simulated)}<button class="btn sm" onclick="DOS.go('runs/${esc(final.id)}')">${icon("pulse")}Trace</button>`;
-      stage.innerHTML = `<span class="answer ${final.status === "completed" ? "" : final.status === "waiting_approval" ? "wait" : "bad"}" style="display:block;margin-top:6px;white-space:pre-wrap;max-height:220px;overflow:auto">${esc(out)}</span>`;
+      DOS.qs(".ewlast", c).innerHTML = `<button class="btn sm" onclick="DOS.go('runs/${esc(final.id)}')">${icon("pulse")}Open full trace</button>`;
+      stage.innerHTML = DOS.result(final, { agent: a.name }); stage.style.color = "";
+      DOS.animateResult(stage);
       bar.style.width = "100%";
     }
     DOS.refreshMe();

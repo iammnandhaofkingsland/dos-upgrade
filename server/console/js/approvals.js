@@ -42,7 +42,7 @@
     return `<div class="apcard rise" style="--i:${i}" id="apc-${esc(a.id)}">
       <div class="row"><span class="ico" style="--ic:var(--accent)">${icon("clock")}</span><div class="grow"><b style="font-size:15px">${esc(a.agent_name)} wants to ${esc(DOS.title(a.tool).toLowerCase())}</b>
         <div class="small muted">${DOS.ago(a.created_at)} · asked by ${esc(a.requested_by)}</div></div>${DOS.status(a.status)}</div>
-      <div class="args">${Object.entries(a.args || {}).slice(0, 8).map(([k, v]) => `<div><span>${esc(DOS.title(k))}</span><b>${esc(typeof v === "object" ? JSON.stringify(v) : v)}</b></div>`).join("")}</div>
+      <div class="args">${Object.entries(a.args || {}).slice(0, 8).map(([k, v]) => `<div><span>${esc(DOS.title(k))}</span><b>${esc(DOS.argText(v))}</b></div>`).join("")}</div>
       <div class="small" style="color:var(--text2)">${icon("shield")} <b>Why a person decides:</b> ${esc(a.why || "Company rule")}</div>
       ${named ? `<div class="small muted">Only ${esc(named)} may decide this action for this company.</div>` : ""}
       ${a.decided_by ? `<div class="small muted">Decided by ${esc(a.decided_by)} ${DOS.ago(a.decided_at)}${a.note ? ": " + esc(a.note) : ""}</div>` : ""}

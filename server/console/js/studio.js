@@ -132,15 +132,13 @@
     const box = DOS.$("result");
     const waiting = (run.approvals || []).filter((x) => x.status === "pending");
     const cls = run.status === "completed" ? "" : run.status === "waiting_approval" ? "wait" : "bad";
-    box.innerHTML = `<div class="row" style="margin-bottom:8px">${DOS.status(run.status)}${DOS.simChip(run.simulated)}<span class="small muted">${num(run.latency_ms)} ms · ${num(run.model_calls)} model calls · ${num(run.tool_calls)} tool calls · ${DOS.inr(run.cost_inr)}</span></div>
-      <div class="answer ${cls}" id="ans"></div>
-      ${waiting.map((w) => `<div class="apcard" style="margin-top:10px" id="ap-${esc(w.id)}"><div class="row"><span class="ico" style="--ic:var(--accent)">${icon("clock")}</span><div class="grow"><b>Waiting for a person: ${esc(DOS.title(w.tool))}</b><div class="small muted">${esc(w.why || "")}</div></div></div>
-        <div class="args">${Object.entries(w.args || {}).slice(0, 6).map(([k, v]) => `<div><span>${esc(DOS.title(k))}</span><b>${esc(typeof v === "object" ? JSON.stringify(v) : v)}</b></div>`).join("")}</div>
+    box.innerHTML = DOS.result(run, { agent: a.name }) + `
+      ${waiting.map((w) => `<div class="apcard rise" style="margin-top:10px" id="ap-${esc(w.id)}"><div class="row"><span class="ico" style="--ic:var(--accent)">${icon("clock")}</span><div class="grow"><b>Waiting for a person: ${esc(DOS.title(w.tool))}</b><div class="small muted">${esc(w.why || "")}</div></div></div>
+        <div class="args">${Object.entries(w.args || {}).slice(0, 6).map(([k, v]) => `<div><span>${esc(DOS.title(k))}</span><b>${esc(DOS.argText(v))}</b></div>`).join("")}</div>
         ${DOS.can("approval.decide") ? `<div class="row"><button class="btn good" data-ok="${esc(w.id)}">${icon("check")}Approve</button><button class="btn bad" data-no="${esc(w.id)}">${icon("x")}Reject</button><span class="small muted">You are deciding as ${esc(DOS.S.me.user.role_name)}.</span></div>`
           : `<p class="small muted" style="margin:0">An Approver decides this on the Approvals page.</p>`}</div>`).join("")}
       <div class="row" style="margin-top:10px"><button class="btn sm" onclick="DOS.go('runs/${esc(run.id)}')">${icon("pulse")}Open full trace</button></div>`;
-    await DOS.typewrite(DOS.$("ans"), run.output || (run.error ? `${run.error_hint || "The run failed."}\n\nDetail: ${run.error}` : "") || (run.status === "waiting_approval" ? "The agent has prepared the action and is waiting for a person to approve it." : "No answer."));
-    if (run.status === "completed") { const r = box.getBoundingClientRect(); DOS.confetti(r.left + r.width / 2, r.top + 40); }
+    DOS.animateResult(box);
     DOS.qsa("[data-ok],[data-no]", box).forEach((b) => (b.onclick = () => decide(b.dataset.ok || b.dataset.no, !!b.dataset.ok, run, a)));
   }
 

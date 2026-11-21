@@ -8,6 +8,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from . import privacy
+
 from .store import get_store, new_id, now
 
 LAYER = {"config": 2, "data": 3, "model": 4, "tool": 4, "skill": 4, "guardrail": 5, "approval": 5, "governance": 5}
@@ -39,8 +41,33 @@ def mask_contacts(text: str) -> str:
     return text
 
 
+def _compact(v: Any, depth: int = 0) -> str:
+    """Readable one-line form of a tool argument or result (no Python dict syntax on screen)."""
+    if isinstance(v, dict):
+        if depth >= 3:
+            return f"{len(v)} fields"
+        parts = [f"{str(k).replace('_', ' ')}: {_compact(x, depth + 1)}" for k, x in v.items() if not (k == "status" and x == "success")]
+        return (" · " if depth == 0 else ", ").join(parts) if depth == 0 else "{" + ", ".join(parts) + "}"
+    if isinstance(v, (list, tuple)):
+        if not v:
+            return "none"
+        if depth >= 3:
+            return f"{len(v)} items"
+        return f"{len(v)} item{'s' if len(v) != 1 else ''}: " + "; ".join(_compact(x, depth + 1) for x in v[:25]) + ("; …" if len(v) > 25 else "")
+    if isinstance(v, bool):
+        return "yes" if v else "no"
+    if v is None:
+        return "none"
+    if isinstance(v, float):
+        return f"{v:,.2f}".rstrip("0").rstrip(".")
+    return str(v).replace("\n", " ")
+
+
 def preview(value: Any, limit: int = 600) -> str:
-    """Text that is safe to store in a trace: identity numbers and contact details masked, length capped."""
+    """Text that is safe to store in a trace: personal fields masked by name (privacy.mask), identity numbers and
+    contact details masked by pattern, written as readable text, length capped."""
+    if isinstance(value, (dict, list, tuple)):
+        value = _compact(privacy.mask(value))
     return mask_contacts(mask_pii(str(value))[0])[:limit]
 
 
